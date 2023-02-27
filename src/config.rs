@@ -6,8 +6,20 @@ use serde::Deserialize;
 
 #[derive(Debug, Deserialize)]
 pub struct Config {
-    pub overseerr_url: String,
-    pub overseerr_api_key: String,
+    pub overseerr: Overseerr,
+    pub tautulli: Tautulli,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct Overseerr {
+    pub url: String,
+    pub api_key: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct Tautulli {
+    pub url: String,
+    pub api_key: String,
 }
 
 static INSTANCE: OnceCell<Config> = OnceCell::new();

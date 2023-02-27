@@ -12,8 +12,8 @@ where
     let config = Config::global();
 
     let response_data: RequestResponse<T> = client
-        .get(format!("{}/api/v1{}", &config.overseerr_url, path))
-        .header("X-API-Key", &config.overseerr_api_key)
+        .get(format!("{}/api/v1{}", &config.overseerr.url, path))
+        .header("X-API-Key", &config.overseerr.api_key)
         .send()
         .await?
         .json()
