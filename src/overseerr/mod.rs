@@ -4,10 +4,7 @@ mod responses;
 use chrono::prelude::*;
 use color_eyre::Result;
 
-use crate::{
-    config::Config,
-    overseerr::responses::{MediaRequestResponse, RequestResponse},
-};
+use crate::overseerr::responses::{MediaRequestResponse, RequestResponse};
 
 #[derive(Debug)]
 pub struct MediaRequest {
@@ -22,8 +19,8 @@ pub struct MediaRequest {
     pub media_type: responses::MediaType,
 }
 
-pub async fn get_requests(config: &Config) -> Result<Vec<MediaRequest>> {
-    let response_data: RequestResponse<MediaRequestResponse> = api::get("/request", config).await?;
+pub async fn get_requests() -> Result<Vec<MediaRequest>> {
+    let response_data: RequestResponse<MediaRequestResponse> = api::get("/request").await?;
 
     let requests: Vec<Result<MediaRequest>> = response_data
         .results

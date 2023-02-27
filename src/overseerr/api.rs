@@ -4,11 +4,12 @@ use serde::de::DeserializeOwned;
 use super::responses::RequestResponse;
 use crate::config::Config;
 
-pub async fn get<T>(path: &str, config: &Config) -> Result<RequestResponse<T>>
+pub async fn get<T>(path: &str) -> Result<RequestResponse<T>>
 where
     T: DeserializeOwned,
 {
     let client = reqwest::Client::new();
+    let config = Config::global();
 
     let response_data: RequestResponse<T> = client
         .get(format!("{}/api/v1{}", &config.overseerr_url, path))
