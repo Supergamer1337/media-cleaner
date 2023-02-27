@@ -1,3 +1,4 @@
+mod api;
 mod responses;
 
 use chrono::prelude::*;
@@ -22,16 +23,7 @@ pub struct MediaRequest {
 }
 
 pub async fn get_requests(config: &Config) -> Result<Vec<MediaRequest>> {
-    let client = reqwest::Client::new();
-
-    let response = client
-        .get(format!("{}/api/v1/request", &config.overseerr_url))
-        .header("X-API-Key", &config.overseerr_api_key)
-        .send()
-        .await?;
-
-    let body = response.text().await?;
-    let response_data: RequestResponse<MediaRequestResponse> = serde_json::from_str(&body)?;
+    let response_data: RequestResponse<MediaRequestResponse> = api::get("/request", config).await?;
 
     let requests: Vec<Result<MediaRequest>> = response_data
         .results
