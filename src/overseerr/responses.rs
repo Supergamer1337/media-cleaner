@@ -1,6 +1,8 @@
 use serde::Deserialize;
 use serde_repr::Deserialize_repr;
 
+use crate::shared::MediaType;
+
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct RequestResponse<T> {
@@ -30,6 +32,8 @@ pub struct MediaResponse {
     pub id: u32,
     pub tmdb_id: Option<u32>,
     pub tvdb_id: Option<u32>,
+    pub rating_key: Option<String>,
+    pub rating_key_4k: Option<String>,
     pub status: MediaStatus,
     pub media_type: MediaType,
 }
@@ -42,13 +46,6 @@ pub enum MediaStatus {
     Processing,
     PartiallyAvailable,
     Available,
-}
-
-#[derive(Debug, Deserialize, Clone, Copy)]
-#[serde(rename_all = "camelCase")]
-pub enum MediaType {
-    Movie,
-    Tv,
 }
 
 #[derive(Debug, Deserialize)]

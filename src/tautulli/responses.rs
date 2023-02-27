@@ -1,17 +1,32 @@
 use serde::Deserialize;
+use serde_repr::Deserialize_repr;
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "snake_case")]
-pub struct Response<T> {
-    response: ResponseInternal<T>,
+pub struct ResponseArr<T> {
+    response: ResponseInternalArr<T>,
 }
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "snake_case")]
-pub struct ResponseInternal<T> {
+pub struct ResponseInternalArr<T> {
     pub message: Option<String>,
     pub result: ResultType,
     pub data: Vec<T>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub struct ResponseObj<T> {
+    response: ResponseInternalObj<T>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub struct ResponseInternalObj<T> {
+    pub message: Option<String>,
+    pub result: ResultType,
+    pub data: T,
 }
 
 #[derive(Debug, Deserialize, Clone, Copy)]
@@ -22,8 +37,37 @@ pub enum ResultType {
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct HistoryMovie {
+    pub draw: u32,
+    pub records_total: u32,
+    pub records_filtered: u32,
+    pub data: Vec<HistoryMovieItem>,
+}
+
+#[derive(Debug, Deserialize)]
 #[serde(rename_all = "snake_case")]
-pub struct User {
-    username: String,
-    user_id: u32,
+pub struct HistoryMovieItem {
+    pub date: u64,
+    pub duration: u64,
+    pub percent_complete: u8,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct HistoryTv {
+    pub draw: u32,
+    pub records_total: u32,
+    pub records_filtered: u32,
+    pub data: Vec<HistoryTvItem>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub struct HistoryTvItem {
+    pub date: u64,
+    pub duration: u64,
+    pub percent_complete: u8,
+    pub media_index: u32,
+    pub parent_media_index: u32,
 }

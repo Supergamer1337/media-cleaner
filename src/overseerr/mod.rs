@@ -4,19 +4,25 @@ mod responses;
 use chrono::prelude::*;
 use color_eyre::Result;
 
-use crate::overseerr::responses::{MediaRequestResponse, RequestResponse};
+use crate::{
+    overseerr::responses::{MediaRequestResponse, RequestResponse},
+    shared::MediaType,
+};
 
 #[derive(Debug)]
 pub struct MediaRequest {
     pub id: u32,
+    pub media_id: u32,
     pub tvdb_id: Option<u32>,
     pub tmdb_id: Option<u32>,
+    pub rating_key: Option<String>,
+    pub rating_key_4k: Option<String>,
     pub created_at: DateTime<Local>,
     pub updated_at: DateTime<Local>,
     pub requested_by: String,
     pub request_status: responses::RequestStatus,
     pub media_status: responses::MediaStatus,
-    pub media_type: responses::MediaType,
+    pub media_type: MediaType,
 }
 
 pub async fn get_requests() -> Result<Vec<MediaRequest>> {
@@ -62,8 +68,11 @@ fn response_to_media_request(request: &MediaRequestResponse) -> Result<MediaRequ
 
     Ok(MediaRequest {
         id: request.id,
+        media_id: request.media.id,
         tvdb_id: request.media.tvdb_id,
         tmdb_id: request.media.tmdb_id,
+        rating_key: request.media.rating_key.clone(),
+        rating_key_4k: request.media.rating_key_4k.clone(),
         created_at: created_at.with_timezone(&Local),
         updated_at: updated_at.with_timezone(&Local),
         request_status: request.status,
