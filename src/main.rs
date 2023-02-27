@@ -1,13 +1,14 @@
 mod config;
+mod overseerr;
 
-use config::{read_conf, Config};
+use config::read_conf;
 
 #[tokio::main]
 async fn main() {
     match read_conf() {
         Ok(config) => {
-            println!("Config: {:?}", config);
-            overseerr_test(&config).await;
+            let requests = overseerr::get_requests(&config).await.unwrap();
+            println!("{:?}", requests);
         }
         Err(err) => {
             println!(
@@ -16,25 +17,5 @@ async fn main() {
             );
             println!("Make sure you have a config.yaml file in the same directory as the executable and that it is formatted correctly.");
         }
-    }
-}
-
-async fn overseerr_test(config: &Config) {
-    let client = reqwest::Client::new();
-    let res = client
-        .get(format!(
-            "{}/api/v1/user?take=20&skip=0&sort=created",
-            &config.overseerr_url
-        ))
-        .header("X-API-Key", &config.overseerr_token)
-        .send()
-        .await;
-
-    match res {
-        Ok(res) => {
-            println!("Status: {}", res.status());
-            println!("Body: {:?}", res.text().await.unwrap());
-        }
-        Err(err) => println!("Error: {}", err),
     }
 }

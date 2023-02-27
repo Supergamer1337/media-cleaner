@@ -6,7 +6,7 @@ use serde::Deserialize;
 #[derive(Debug, Deserialize)]
 pub struct Config {
     pub overseerr_url: String,
-    pub overseerr_token: String,
+    pub overseerr_api_key: String,
 }
 
 pub fn read_conf() -> Result<Config> {
