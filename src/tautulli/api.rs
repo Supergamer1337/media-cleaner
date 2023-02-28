@@ -8,9 +8,9 @@ trait Response<TypeParam> {
     type TypeParam;
 }
 
-// This is the same as getObj, but returns a ResponseArr instead of a ResponseObj.
+// This is the same as get_obj, but returns a ResponseArr instead of a ResponseObj.
 // I'm not sure how to make this generic, so I'm just copying the function and changing the return type.
-pub async fn getArr<T>(
+pub async fn get_arr<T>(
     command: &str,
     params: Option<Vec<(String, String)>>,
 ) -> Result<ResponseArr<T>>
@@ -38,9 +38,9 @@ where
     Ok(response)
 }
 
-// This is the same as getArr, but returns a ResponseObj instead of a ResponseArr.
+// This is the same as get_arr, but returns a ResponseObj instead of a ResponseArr.
 // I'm not sure how to make this generic, so I'm just copying the function and changing the return type.
-pub async fn getObj<T>(
+pub async fn get_obj<T>(
     command: &str,
     params: Option<Vec<(String, String)>>,
 ) -> Result<ResponseObj<T>>
@@ -58,16 +58,13 @@ where
             .map(|param| param.0 + "=" + &param.1)
             .collect::<Vec<String>>()
             .join("&");
+
     let url = format!(
         "{}/api/v2?apikey={}&cmd={}",
         config.url, config.api_key, cmd
     );
 
-    let response = client.get(&url).send().await?.text().await?;
-
-    println!("{}", response);
-
-    let response: ResponseObj<T> = serde_json::from_str(&response)?;
+    let response = client.get(&url).send().await?.json().await?;
 
     Ok(response)
 }

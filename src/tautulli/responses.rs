@@ -1,10 +1,9 @@
 use serde::Deserialize;
-use serde_repr::Deserialize_repr;
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub struct ResponseArr<T> {
-    response: ResponseInternalArr<T>,
+    pub response: ResponseInternalArr<T>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -18,7 +17,7 @@ pub struct ResponseInternalArr<T> {
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub struct ResponseObj<T> {
-    response: ResponseInternalObj<T>,
+    pub response: ResponseInternalObj<T>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -51,23 +50,25 @@ pub struct HistoryMovieItem {
     pub date: u64,
     pub duration: u64,
     pub percent_complete: u8,
+    pub user: String,
 }
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct HistoryTv {
+pub struct History {
     pub draw: u32,
     pub records_total: u32,
     pub records_filtered: u32,
-    pub data: Vec<HistoryTvItem>,
+    pub data: Vec<HistoryItem>,
 }
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "snake_case")]
-pub struct HistoryTvItem {
+pub struct HistoryItem {
+    pub user: String,
     pub date: u64,
     pub duration: u64,
     pub percent_complete: u8,
-    pub media_index: u32,
-    pub parent_media_index: u32,
+    pub media_index: Option<u32>,
+    pub parent_media_index: Option<u32>,
 }
