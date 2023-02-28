@@ -27,9 +27,20 @@ async fn main() {
         );
 
         if let Some(rating_key) = request.rating_key.as_ref() {
-            tautulli::get_item_watches(rating_key.as_str(), &request.media_type)
+            let item_history = tautulli::get_item_watches(rating_key.as_str(), &request.media_type)
                 .await
                 .unwrap();
+
+            match item_history {
+                tautulli::WatchHistory::Movie(item_history) => {
+                    println!("{} watches", item_history.watches.len());
+                    println!("{:#?}", item_history);
+                }
+                tautulli::WatchHistory::TvShow(item_history) => {
+                    println!("{} watches", item_history.watches.len());
+                    println!("{:#?}", item_history);
+                }
+            }
         }
     }
 }

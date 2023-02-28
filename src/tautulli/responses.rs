@@ -47,7 +47,7 @@ pub struct HistoryMovie {
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub struct HistoryMovieItem {
-    pub date: u64,
+    pub date: i64,
     pub duration: u64,
     pub percent_complete: u8,
     pub user: String,
@@ -66,7 +66,7 @@ pub struct History {
 #[serde(rename_all = "snake_case")]
 pub struct HistoryItem {
     pub user: String,
-    pub date: u64,
+    pub date: i64,
     pub duration: u64,
     pub percent_complete: u8,
     pub media_index: Option<u32>,
