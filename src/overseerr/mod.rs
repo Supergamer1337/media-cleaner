@@ -1,5 +1,5 @@
 mod api;
-mod responses;
+pub mod responses;
 
 use chrono::prelude::*;
 use color_eyre::Result;
