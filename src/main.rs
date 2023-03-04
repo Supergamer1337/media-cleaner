@@ -4,14 +4,16 @@ mod shared;
 mod tautulli;
 mod tmdb;
 
-use color_eyre::{owo_colors::OwoColorize, Result};
+use color_eyre::{owo_colors::OwoColorize, Report, Result};
+use futures::future;
 use itertools::Itertools;
 
 use config::Config;
 use overseerr::{responses::MediaStatus, MediaRequest};
 use shared::MediaType;
 use tautulli::WatchHistory;
-use tokio::{join, try_join};
+use tmdb::ItemMetadata;
+use tokio::try_join;
 
 #[derive(Debug)]
 struct MediaItem {
@@ -20,6 +22,7 @@ struct MediaItem {
     media_type: MediaType,
     request: Option<MediaRequest>,
     history: Option<WatchHistory>,
+    details: Option<ItemMetadata>,
 }
 
 impl MediaItem {
@@ -33,36 +36,66 @@ impl MediaItem {
             media_type: request.media_type,
             request: Some(request),
             history: None,
+            details: None,
         })
     }
 
-    async fn get_history(&mut self) -> Result<()> {
-        let rating_key = match &self.rating_key {
-            Some(ref rating_key) => rating_key,
-            None => return Ok(()),
-        };
+    async fn get_all_info(&mut self) -> Result<()> {
+        let history = self.retrieve_history();
+        let metadata = self.retrieve_metadata();
+        let res = try_join!(history, metadata)?;
 
-        let history = tautulli::get_item_watches(rating_key, &self.media_type).await?;
-
-        self.history = Some(history);
+        self.history = res.0;
+        if let Some(details) = res.1 {
+            self.title = Some(details.name.clone());
+            self.details = Some(details);
+        }
 
         Ok(())
     }
 
+    async fn get_history(&mut self) -> Result<()> {
+        let history = self.retrieve_history().await?;
+        self.history = history;
+
+        Ok(())
+    }
+
+    async fn retrieve_history(&self) -> Result<Option<WatchHistory>> {
+        let rating_key = match &self.rating_key {
+            Some(ref rating_key) => rating_key,
+            None => return Ok(None),
+        };
+
+        Ok(Some(
+            tautulli::get_item_watches(rating_key, &self.media_type).await?,
+        ))
+    }
+
     async fn get_item_metadata(&mut self) -> Result<()> {
+        let details = self.retrieve_metadata().await?;
+        match details {
+            Some(details) => {
+                self.title = Some(details.name.clone());
+                self.details = Some(details);
+                Ok(())
+            }
+            None => Ok(()),
+        }
+    }
+
+    async fn retrieve_metadata(&self) -> Result<Option<ItemMetadata>> {
         let request = match self.request {
             Some(ref request) => request,
-            None => return Ok(()),
+            None => return Ok(None),
         };
 
         let tmdb_id = match request.tmdb_id {
             Some(ref tmdb_id) => *tmdb_id,
-            None => return Ok(()),
+            None => return Ok(None),
         };
 
-        let details = tmdb::get_metadata(tmdb_id, &self.media_type).await?;
-        self.title = Some(details.name);
-        Ok(())
+        Ok(Some(tmdb::get_metadata(tmdb_id, &self.media_type).await?))
     }
 
     fn write_watch_history(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -161,7 +194,7 @@ async fn main() -> Result<()> {
 
     let requests = overseerr::get_requests().await.unwrap();
 
-    let mut items: Vec<MediaItem> = requests
+    let items: Vec<MediaItem> = requests
         .into_iter()
         .filter_map(|request| match MediaItem::from_request(request) {
             Ok(item) => Some(item),
@@ -172,10 +205,19 @@ async fn main() -> Result<()> {
         })
         .collect();
 
-    for item in items.iter_mut() {
-        item.get_history().await?;
-        item.get_item_metadata().await?;
-    }
+    let futures = items.into_iter().map(|mut item| {
+        tokio::spawn(async move {
+            item.get_all_info().await?;
+
+            Ok::<MediaItem, Report>(item)
+        })
+    });
+
+    let items: Vec<MediaItem> = future::try_join_all(futures)
+        .await?
+        .into_iter()
+        .filter_map(|future| future.ok())
+        .collect();
 
     items
         .iter()
