@@ -8,6 +8,7 @@ use serde::Deserialize;
 pub struct Config {
     pub overseerr: Overseerr,
     pub tautulli: Tautulli,
+    pub tmdb: TMDB,
 }
 
 #[derive(Debug, Deserialize)]
@@ -20,6 +21,11 @@ pub struct Overseerr {
 pub struct Tautulli {
     pub url: String,
     pub api_key: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct TMDB {
+    pub v3_key: String,
 }
 
 static INSTANCE: OnceCell<Config> = OnceCell::new();

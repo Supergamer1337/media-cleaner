@@ -123,11 +123,11 @@ pub async fn get_item_watches(rating_key: &str, media_type: &MediaType) -> Resul
 
 async fn get_item_history(rating_key: &str, media_type: &MediaType) -> Result<History> {
     if let MediaType::Movie = media_type {
-        let params = vec![("rating_key".to_string(), rating_key.to_string())];
+        let params = vec![("rating_key", rating_key)];
         let history: ResponseObj<HistoryMovie> = api::get_obj("get_history", Some(params)).await?;
         Ok(history_movie_to_history(history.response.data))
     } else {
-        let params = vec![("grandparent_rating_key".to_string(), rating_key.to_string())];
+        let params = vec![("grandparent_rating_key", rating_key)];
         let history: ResponseObj<History> = api::get_obj("get_history", Some(params)).await?;
         Ok(history.response.data)
     }

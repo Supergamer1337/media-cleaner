@@ -2,15 +2,20 @@ mod config;
 mod overseerr;
 mod shared;
 mod tautulli;
+mod tmdb;
 
 use color_eyre::{owo_colors::OwoColorize, Result};
+use itertools::Itertools;
+
 use config::Config;
 use overseerr::{responses::MediaStatus, MediaRequest};
 use shared::MediaType;
 use tautulli::WatchHistory;
+use tokio::{join, try_join};
 
 #[derive(Debug)]
 struct MediaItem {
+    title: Option<String>,
     rating_key: Option<String>,
     media_type: MediaType,
     request: Option<MediaRequest>,
@@ -20,6 +25,7 @@ struct MediaItem {
 impl MediaItem {
     fn from_request(request: MediaRequest) -> Result<Self> {
         Ok(Self {
+            title: None,
             rating_key: match request.rating_key {
                 Some(ref rating_key) => Some(rating_key.clone()),
                 None => None,
@@ -40,6 +46,22 @@ impl MediaItem {
 
         self.history = Some(history);
 
+        Ok(())
+    }
+
+    async fn get_item_metadata(&mut self) -> Result<()> {
+        let request = match self.request {
+            Some(ref request) => request,
+            None => return Ok(()),
+        };
+
+        let tmdb_id = match request.tmdb_id {
+            Some(ref tmdb_id) => *tmdb_id,
+            None => return Ok(()),
+        };
+
+        let details = tmdb::get_metadata(tmdb_id, &self.media_type).await?;
+        self.title = Some(details.name);
         Ok(())
     }
 
@@ -98,8 +120,8 @@ impl MediaItem {
 
 impl std::fmt::Display for MediaItem {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let title = match &self.rating_key {
-            Some(ref rating_key) => rating_key,
+        let title = match self.title {
+            Some(ref title) => title,
             None => "Unknown",
         };
         let media_type = &self.media_type;
@@ -151,16 +173,16 @@ async fn main() -> Result<()> {
         .collect();
 
     for item in items.iter_mut() {
-        if let Err(err) = item.get_history().await {
-            println!(
-                "Failed to get history for {} with error {}",
-                item.rating_key.as_ref().unwrap(),
-                err
-            );
-        } else {
-            println!("{}", item);
-        }
+        item.get_history().await?;
+        item.get_item_metadata().await?;
     }
+
+    items
+        .iter()
+        .unique_by(|item| item.title.as_ref().unwrap())
+        .for_each(|item| {
+            println!("{}", item);
+        });
 
     Ok(())
 }
