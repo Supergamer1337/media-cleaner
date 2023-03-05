@@ -9,6 +9,7 @@ pub struct Config {
     pub overseerr: Overseerr,
     pub tautulli: Tautulli,
     pub tmdb: TMDB,
+    pub sonarr: Sonarr,
 }
 
 #[derive(Debug, Deserialize)]
@@ -26,6 +27,12 @@ pub struct Tautulli {
 #[derive(Debug, Deserialize)]
 pub struct TMDB {
     pub v3_key: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct Sonarr {
+    pub api_key: String,
+    pub url: String,
 }
 
 static INSTANCE: OnceCell<Config> = OnceCell::new();

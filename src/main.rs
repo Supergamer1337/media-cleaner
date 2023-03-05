@@ -2,17 +2,17 @@ mod config;
 mod media_item;
 mod overseerr;
 mod shared;
+mod sonarr;
 mod tautulli;
 mod tmdb;
 
-use std::cmp::Ordering;
+use std::process::Command;
 
-use color_eyre::{Report, Result};
-use futures::future;
-use itertools::Itertools;
+use color_eyre::Result;
 
 use config::Config;
-use media_item::MediaItem;
+use dialoguer::MultiSelect;
+use media_item::get_requests_data;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -23,64 +23,25 @@ async fn main() -> Result<()> {
         std::process::exit(1);
     }
 
-    let requests = overseerr::get_requests().await.unwrap();
+    let requests = get_requests_data().await?;
 
-    let items = requests
-        .into_iter()
-        .filter_map(|request| match MediaItem::from_request(request) {
-            Ok(item) => Some(item),
-            Err(err) => {
-                eprintln!("Error creating media item: {}", err);
-                None
-            }
-        })
-        .filter(|item| item.is_request_available())
-        .sorted_by(|item1, item2| {
-            if let (Some(rating_key), Some(rating_key2)) =
-                (item1.get_rating_key(), item2.get_rating_key())
-            {
-                rating_key.cmp(rating_key2)
-            } else {
-                Ordering::Less
-            }
-        })
-        .dedup_by(|item1, item2| {
-            if let (Some(rating_key), Some(rating_key2)) =
-                (item1.get_rating_key(), item2.get_rating_key())
-            {
-                rating_key.eq(rating_key2)
-            } else {
-                false
-            }
-        })
-        .collect_vec();
+    if cfg!(target_os = "windows") {
+        Command::new("cmd").arg("/C").arg("cls").status()?;
+    } else {
+        Command::new("clear").status()?;
+    };
 
-    let futures = items.into_iter().map(|mut item| {
-        tokio::spawn(async move {
-            item.get_all_info().await?;
+    let chosen: Vec<usize> = MultiSelect::new()
+        .with_prompt("Choose what media to delete.")
+        .max_length(5)
+        .items(&requests)
+        .interact()?;
 
-            Ok::<MediaItem, Report>(item)
-        })
-    });
-
-    let items = future::try_join_all(futures)
-        .await?
-        .into_iter()
-        .filter_map(|future| future.ok())
-        .collect_vec();
-
-    items
-        .iter()
-        .sorted_by(|item1, item2| {
-            if let (Some(title), Some(title2)) = (item1.get_title(), item2.get_title()) {
-                title.cmp(title2)
-            } else {
-                Ordering::Less
-            }
-        })
-        .for_each(|item| {
-            println!("{}", item);
+    chosen.into_iter().for_each(|selection| {
+        requests.get(selection).map(|request| {
+            println!("Deleting {}", request.get_title().as_ref().unwrap());
         });
+    });
 
     Ok(())
 }

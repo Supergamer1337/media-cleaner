@@ -23,9 +23,10 @@ where
     for page in 1..response_data.page_info.pages {
         let mut page_data: RequestResponse<T> = client
             .get(format!(
-                "{}/api/v1{}?skip={}",
+                "{}/api/v1{}?take={}&skip={}",
                 &config.overseerr.url,
                 path,
+                page_size,
                 page_size * page
             ))
             .header("X-API-Key", &config.overseerr.api_key)
