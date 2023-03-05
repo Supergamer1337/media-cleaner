@@ -114,9 +114,10 @@ impl MediaItem {
             watches.iter().for_each(|watch| {
                 writeln!(
                     f,
-                    "   * Last watch by {} was at {}",
+                    "   * Last watch by {} was at {} with {} watched",
                     watch.display_name.purple().to_string(),
                     watch.last_watched.format("%d-%m-%Y").blue().to_string(),
+                    (watch.progress.to_string() + "%").yellow()
                 )
                 .unwrap_or_else(|err| {
                     eprintln!("   * Failed to write watch line with err {}", err)
@@ -135,11 +136,12 @@ impl MediaItem {
             watches.iter().for_each(|watch| {
                 writeln!(
                     f,
-                    "   * Last watch by {} was at {}, Season {} Episode {}",
+                    "   * Last watch by {} was at {} on Season {} Episode {} with {} watched",
                     watch.display_name.purple().to_string(),
                     watch.last_watched.format("%d-%m-%Y").blue().to_string(),
                     watch.season,
-                    watch.episode
+                    watch.episode,
+                    (watch.progress.to_string() + "%").yellow()
                 )
                 .unwrap_or_else(|err| {
                     eprintln!("   * Failed to write watch line with err {}", err)
