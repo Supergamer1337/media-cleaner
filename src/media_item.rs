@@ -66,13 +66,6 @@ impl MediaItem {
         Ok(())
     }
 
-    pub async fn get_history(&mut self) -> Result<()> {
-        let history = self.retrieve_history().await?;
-        self.history = history;
-
-        Ok(())
-    }
-
     async fn retrieve_history(&self) -> Result<Option<WatchHistory>> {
         let rating_key = match &self.rating_key {
             Some(ref rating_key) => rating_key,
@@ -82,18 +75,6 @@ impl MediaItem {
         Ok(Some(
             tautulli::get_item_watches(rating_key, &self.media_type).await?,
         ))
-    }
-
-    pub async fn get_item_metadata(&mut self) -> Result<()> {
-        let details = self.retrieve_metadata().await?;
-        match details {
-            Some(details) => {
-                self.title = Some(details.name.clone());
-                self.details = Some(details);
-                Ok(())
-            }
-            None => Ok(()),
-        }
     }
 
     async fn retrieve_metadata(&self) -> Result<Option<ItemMetadata>> {
