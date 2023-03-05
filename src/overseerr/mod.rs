@@ -1,5 +1,7 @@
 mod api;
-pub mod responses;
+mod responses;
+
+pub use responses::MediaStatus;
 
 use chrono::prelude::*;
 use color_eyre::Result;
