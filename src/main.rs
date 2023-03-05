@@ -129,6 +129,7 @@ impl MediaItem {
             let watches = &history.watches;
             if watches.len() == 0 {
                 writeln!(f, "Has no watch history")?;
+                return Ok(());
             }
             writeln!(f, "With Watch History:")?;
             watches.iter().for_each(|watch| {

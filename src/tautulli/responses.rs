@@ -37,29 +37,11 @@ pub enum ResultType {
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct HistoryMovie {
+pub struct History<T> {
     pub draw: u32,
     pub records_total: u32,
     pub records_filtered: u32,
-    pub data: Vec<HistoryMovieItem>,
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(rename_all = "snake_case")]
-pub struct HistoryMovieItem {
-    pub date: i64,
-    pub duration: u64,
-    pub percent_complete: u8,
-    pub user: String,
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct History {
-    pub draw: u32,
-    pub records_total: u32,
-    pub records_filtered: u32,
-    pub data: Vec<HistoryItem>,
+    pub data: Vec<T>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -71,4 +53,13 @@ pub struct HistoryItem {
     pub percent_complete: u8,
     pub media_index: Option<u32>,
     pub parent_media_index: Option<u32>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub struct HistoryMovieItem {
+    pub date: i64,
+    pub duration: u64,
+    pub percent_complete: u8,
+    pub user: String,
 }

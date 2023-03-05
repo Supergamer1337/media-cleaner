@@ -1,14 +1,13 @@
 mod api;
 mod responses;
 
-use std::collections::BTreeMap;
-
 use chrono::prelude::*;
 use color_eyre::Result;
+use serde::de::DeserializeOwned;
+use std::collections::BTreeMap;
 
+use self::responses::{History, HistoryItem, HistoryMovieItem};
 use crate::{shared::MediaType, tautulli::responses::ResponseObj};
-
-use self::responses::{History, HistoryItem, HistoryMovie};
 
 #[derive(Debug)]
 pub enum WatchHistory {
@@ -99,7 +98,6 @@ pub async fn get_item_watches(rating_key: &str, media_type: &MediaType) -> Resul
 
     let latest_user_history =
         history
-            .data
             .iter()
             .fold(BTreeMap::new(), |mut user_latest_watch, current_watch| {
                 user_latest_watch
@@ -121,36 +119,59 @@ pub async fn get_item_watches(rating_key: &str, media_type: &MediaType) -> Resul
     ))
 }
 
-async fn get_item_history(rating_key: &str, media_type: &MediaType) -> Result<History> {
+async fn get_item_history(rating_key: &str, media_type: &MediaType) -> Result<Vec<HistoryItem>> {
     if let MediaType::Movie = media_type {
-        let params = vec![("rating_key", rating_key)];
-        let history: ResponseObj<HistoryMovie> = api::get_obj("get_history", Some(params)).await?;
-        Ok(history_movie_to_history(history.response.data))
+        let history: Vec<HistoryMovieItem> = get_full_history(rating_key, "rating_key").await?;
+        Ok(movie_item_to_history_item(history))
     } else {
-        let params = vec![("grandparent_rating_key", rating_key)];
-        let history: ResponseObj<History> = api::get_obj("get_history", Some(params)).await?;
-        Ok(history.response.data)
+        let history: Vec<HistoryItem> =
+            get_full_history(rating_key, "grandparent_rating_key").await?;
+        Ok(history)
     }
 }
 
-fn history_movie_to_history(history: HistoryMovie) -> History {
-    History {
-        draw: history.draw,
-        records_total: history.records_total,
-        records_filtered: history.records_filtered,
-        data: history
-            .data
-            .into_iter()
-            .map(|item| HistoryItem {
-                user: item.user,
-                date: item.date,
-                duration: item.duration,
-                percent_complete: item.percent_complete,
-                media_index: None,
-                parent_media_index: None,
-            })
-            .collect(),
+async fn get_full_history<T>(rating_key: &str, rating_key_kind: &str) -> Result<Vec<T>>
+where
+    T: DeserializeOwned,
+{
+    let length = 1000;
+    let length_string = length.to_string();
+    let mut history: Vec<T> = Vec::new();
+    let mut page = 0;
+    loop {
+        let page_string = page.to_string();
+        let params = vec![
+            (rating_key_kind, rating_key),
+            ("length", &length_string),
+            ("start", &page_string),
+        ];
+        let mut history_page: ResponseObj<History<T>> =
+            api::get_obj("get_history", Some(params)).await?;
+
+        if history_page.response.data.data.len() < length {
+            history.append(&mut history_page.response.data.data);
+            break;
+        } else {
+            history.append(&mut history_page.response.data.data);
+            page += 1;
+        }
     }
+
+    Ok(history)
+}
+
+fn movie_item_to_history_item(history: Vec<HistoryMovieItem>) -> Vec<HistoryItem> {
+    history
+        .into_iter()
+        .map(|item| HistoryItem {
+            user: item.user,
+            date: item.date,
+            duration: item.duration,
+            percent_complete: item.percent_complete,
+            media_index: None,
+            parent_media_index: None,
+        })
+        .collect()
 }
 
 fn unix_seconds_to_date(unix_seconds: i64) -> Option<DateTime<Utc>> {
