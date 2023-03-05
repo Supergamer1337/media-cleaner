@@ -18,6 +18,7 @@ pub struct PageInfo {
     pub page: u32,
     pub pages: u32,
     pub results: u32,
+    pub page_size: u32,
 }
 
 #[derive(Debug, Deserialize)]

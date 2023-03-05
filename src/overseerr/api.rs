@@ -11,13 +11,31 @@ where
     let client = reqwest::Client::new();
     let config = Config::global();
 
-    let response_data: RequestResponse<T> = client
-        .get(format!("{}/api/v1{}", &config.overseerr.url, path))
+    let mut response_data: RequestResponse<T> = client
+        .get(format!("{}/api/v1{}?take=100", &config.overseerr.url, path))
         .header("X-API-Key", &config.overseerr.api_key)
         .send()
         .await?
         .json()
         .await?;
+
+    let page_size = response_data.page_info.page_size;
+    for page in 1..response_data.page_info.pages {
+        let mut page_data: RequestResponse<T> = client
+            .get(format!(
+                "{}/api/v1{}?skip={}",
+                &config.overseerr.url,
+                path,
+                page_size * page
+            ))
+            .header("X-API-Key", &config.overseerr.api_key)
+            .send()
+            .await?
+            .json()
+            .await?;
+
+        response_data.results.append(&mut page_data.results);
+    }
 
     Ok(response_data)
 }
