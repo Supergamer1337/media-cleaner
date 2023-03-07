@@ -10,6 +10,7 @@ pub struct Config {
     pub tautulli: Tautulli,
     pub tmdb: TMDB,
     pub sonarr: Sonarr,
+    pub radarr: Radarr,
 }
 
 #[derive(Debug, Deserialize)]
@@ -31,6 +32,12 @@ pub struct TMDB {
 
 #[derive(Debug, Deserialize)]
 pub struct Sonarr {
+    pub api_key: String,
+    pub url: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct Radarr {
     pub api_key: String,
     pub url: String,
 }

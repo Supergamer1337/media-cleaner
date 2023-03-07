@@ -14,6 +14,7 @@ pub struct SeriesResource {
     pub previous_airing: Option<String>,
     pub next_airing: Option<String>,
     pub statistics: SeriesStatisticsResource,
+    pub is_available: bool,
 }
 
 #[derive(Debug, Deserialize, Clone, Copy)]

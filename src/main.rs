@@ -1,8 +1,8 @@
+mod arr;
 mod config;
 mod media_item;
 mod overseerr;
 mod shared;
-mod sonarr;
 mod tautulli;
 mod tmdb;
 
