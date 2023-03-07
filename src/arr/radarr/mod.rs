@@ -22,8 +22,8 @@ pub async fn get_radarr_data(tmdb_id: u32) -> Result<MovieData> {
 impl MovieData {
     pub fn from_movie_resource(movie_resource: &MovieResource) -> Result<Self> {
         Ok(MovieData {
-            id: movie_resource.id,
-            title: movie_resource.title,
+            id: movie_resource.id.clone(),
+            title: movie_resource.title.clone(),
             status: movie_resource.status,
             size_on_disk: movie_resource.size_on_disk,
             digital_release: match movie_resource.digital_release {

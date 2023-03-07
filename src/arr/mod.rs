@@ -7,6 +7,7 @@ use color_eyre::Result;
 pub use self::radarr::MovieStatus;
 pub use self::sonarr::SeriesStatus;
 
+#[derive(Debug)]
 pub struct MovieData {
     pub id: String,
     pub title: Option<String>,
@@ -23,15 +24,15 @@ pub async fn get_movie_data(tmdb_id: u32) -> Result<MovieData> {
 
 #[derive(Debug)]
 pub struct TvData {
-    id: i32,
-    title: Option<String>,
-    status: SeriesStatus,
-    last_airing: Option<DateTime<Utc>>,
-    next_airing: Option<DateTime<Utc>>,
-    season_count: i32,
-    percent_of_episodes_on_disk: f64,
-    size_on_disk: i64,
-    is_available: bool,
+    pub id: i32,
+    pub title: Option<String>,
+    pub status: SeriesStatus,
+    pub last_airing: Option<DateTime<Utc>>,
+    pub next_airing: Option<DateTime<Utc>>,
+    pub season_count: i32,
+    pub percent_of_episodes_on_disk: f64,
+    pub size_on_disk: i64,
+    pub is_available: bool,
 }
 
 pub async fn get_tv_data(tvdb_id: u32) -> Result<TvData> {
