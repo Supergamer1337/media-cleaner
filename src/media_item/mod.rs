@@ -73,7 +73,7 @@ pub async fn get_requests_data() -> Result<Vec<MediaItem>> {
     Ok(future::try_join_all(futures)
         .await?
         .into_iter()
-        .filter_map(|future| future.ok())
+        .filter_map(|future| future.ok()) // TODO: Change this to give error messages to the user.
         .sorted_by(|item1, item2| {
             if let (Some(title), Some(title2)) = (item1.get_title(), item2.get_title()) {
                 title.cmp(title2)

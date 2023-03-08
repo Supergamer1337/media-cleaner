@@ -1,8 +1,7 @@
-use std::fs;
-
 use color_eyre::Result;
 use once_cell::sync::OnceCell;
 use serde::Deserialize;
+use std::fs;
 
 #[derive(Debug, Deserialize)]
 pub struct Config {

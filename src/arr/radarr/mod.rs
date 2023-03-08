@@ -22,7 +22,7 @@ pub async fn get_radarr_data(tmdb_id: u32) -> Result<MovieData> {
 impl MovieData {
     pub fn from_movie_resource(movie_resource: &MovieResource) -> Result<Self> {
         Ok(MovieData {
-            id: movie_resource.id.clone(),
+            id: movie_resource.id,
             title: movie_resource.title.clone(),
             status: movie_resource.status,
             size_on_disk: movie_resource.size_on_disk,
@@ -34,7 +34,6 @@ impl MovieData {
                 Some(ref date) => Some(date_string_to_date_time(date)?),
                 None => None,
             },
-            is_available: movie_resource.is_available,
         })
     }
 }

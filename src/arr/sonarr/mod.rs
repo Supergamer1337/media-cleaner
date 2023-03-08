@@ -36,7 +36,6 @@ impl TvData {
             season_count: series_resource.statistics.season_count,
             percent_of_episodes_on_disk: series_resource.statistics.percent_of_episodes,
             size_on_disk: series_resource.statistics.size_on_disk,
-            is_available: series_resource.is_available,
         })
     }
 }

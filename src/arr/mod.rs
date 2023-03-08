@@ -9,13 +9,12 @@ pub use self::sonarr::SeriesStatus;
 
 #[derive(Debug)]
 pub struct MovieData {
-    pub id: String,
+    pub id: i32,
     pub title: Option<String>,
     pub status: MovieStatus,
     pub size_on_disk: Option<i64>,
     pub digital_release: Option<DateTime<Utc>>,
     pub physical_release: Option<DateTime<Utc>>,
-    pub is_available: bool,
 }
 
 pub async fn get_movie_data(tmdb_id: u32) -> Result<MovieData> {
@@ -32,7 +31,6 @@ pub struct TvData {
     pub season_count: i32,
     pub percent_of_episodes_on_disk: f64,
     pub size_on_disk: i64,
-    pub is_available: bool,
 }
 
 pub async fn get_tv_data(tvdb_id: u32) -> Result<TvData> {
