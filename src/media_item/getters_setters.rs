@@ -25,7 +25,7 @@ impl MediaItem {
         }
     }
 
-    pub(super) fn get_media_type(&self) -> MediaType {
+    pub(crate) fn get_media_type(&self) -> MediaType {
         match self {
             Self::Tv { .. } => MediaType::Tv,
             Self::Movie { .. } => MediaType::Movie,
