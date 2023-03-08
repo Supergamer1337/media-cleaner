@@ -56,6 +56,12 @@ pub async fn get_requests() -> Result<Vec<MediaRequest>> {
     Ok(requests)
 }
 
+pub async fn remove_request(request_id: u32) -> Result<()> {
+    let path = format!("/request/{}", request_id.to_string());
+    api::delete(&path).await?;
+    Ok(())
+}
+
 fn response_to_media_request(request: &MediaRequestResponse) -> Result<MediaRequest> {
     let created_at = DateTime::parse_from_rfc3339(&request.created_at)?;
     let updated_at = match &request.updated_at {

@@ -9,11 +9,11 @@ where
     T: DeserializeOwned,
 {
     let client = reqwest::Client::new();
-    let config = Config::global();
+    let config = &Config::global().overseerr;
 
     let mut response_data: RequestResponse<T> = client
-        .get(format!("{}/api/v1{}?take=100", &config.overseerr.url, path))
-        .header("X-API-Key", &config.overseerr.api_key)
+        .get(format!("{}/api/v1{}?take=100", &config.url, path))
+        .header("X-API-Key", &config.api_key)
         .send()
         .await?
         .json()
@@ -24,12 +24,12 @@ where
         let mut page_data: RequestResponse<T> = client
             .get(format!(
                 "{}/api/v1{}?take={}&skip={}",
-                &config.overseerr.url,
+                &config.url,
                 path,
                 page_size,
                 page_size * page
             ))
-            .header("X-API-Key", &config.overseerr.api_key)
+            .header("X-API-Key", &config.api_key)
             .send()
             .await?
             .json()
@@ -39,4 +39,17 @@ where
     }
 
     Ok(response_data)
+}
+
+pub async fn delete(path: &str) -> Result<()> {
+    let config = &Config::global().overseerr;
+    let client = reqwest::Client::new();
+
+    client
+        .delete(path)
+        .header("X-API-Key", &config.api_key)
+        .send()
+        .await?;
+
+    Ok(())
 }

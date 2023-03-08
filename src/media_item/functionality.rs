@@ -4,7 +4,7 @@ use tokio::try_join;
 use super::MediaItem;
 use crate::{
     arr::{self, MovieData, TvData},
-    overseerr::MediaStatus,
+    overseerr::{self, MediaStatus},
     tautulli::{self, WatchHistory},
     tmdb::{self, ItemMetadata},
 };
@@ -15,6 +15,12 @@ enum ArrData {
 }
 
 impl MediaItem {
+    pub(crate) async fn delete_item(mut self) -> Result<()> {
+        self.delete_request().await?;
+
+        Ok(())
+    }
+
     pub(super) fn is_request_available(&self) -> bool {
         if let Some(request) = self.get_request() {
             match request.media_status {
@@ -53,6 +59,19 @@ impl MediaItem {
                 }
             }
         }
+
+        Ok(())
+    }
+
+    async fn delete_request(&mut self) -> Result<()> {
+        let request = match self.get_request() {
+            Some(request) => request,
+            None => return Ok(()),
+        };
+
+        overseerr::remove_request(request.id).await?;
+
+        self.remove_request();
 
         Ok(())
     }

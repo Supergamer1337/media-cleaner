@@ -63,4 +63,13 @@ impl MediaItem {
             }
         }
     }
+
+    /* ------------------ Specialized setters ------------------ */
+    pub(super) fn remove_request(&mut self) {
+        match self {
+            Self::Tv { request, .. } | Self::Movie { request, .. } => {
+                *request = None;
+            }
+        }
+    }
 }
