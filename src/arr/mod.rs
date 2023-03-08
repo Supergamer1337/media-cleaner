@@ -46,3 +46,7 @@ fn date_string_to_date_time(date: &str) -> Result<DateTime<Utc>> {
 pub async fn remove_tv_data(id: i32) -> Result<()> {
     sonarr::remove_sonarr_data_and_files(id).await
 }
+
+pub async fn remove_movie_data(id: i32) -> Result<()> {
+    radarr::delete_radarr_data_and_files(id).await
+}

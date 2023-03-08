@@ -82,14 +82,19 @@ impl MediaItem {
         match self {
             Self::Tv { tv_data, .. } => {
                 if let Some(tv_data) = tv_data {
-                    arr::remove_tv_data(tv_data.id).await;
+                    arr::remove_tv_data(tv_data.id).await?;
                     Ok(())
                 } else {
                     Ok(())
                 }
             }
             Self::Movie { movie_data, .. } => {
-                todo!()
+                if let Some(movie_data) = movie_data {
+                    arr::remove_movie_data(movie_data.id).await?;
+                    Ok(())
+                } else {
+                    Ok(())
+                }
             }
         }
     }

@@ -19,6 +19,12 @@ pub async fn get_radarr_data(tmdb_id: u32) -> Result<MovieData> {
     }
 }
 
+pub async fn delete_radarr_data_and_files(radarr_id: i32) -> Result<()> {
+    let path = format!("/movie/{}", radarr_id.to_string());
+    let params = vec![("deleteFiles", "true"), ("addImportExclusion", "false")];
+    api::delete(path.as_str(), Some(params)).await
+}
+
 impl MovieData {
     pub fn from_movie_resource(movie_resource: &MovieResource) -> Result<Self> {
         Ok(MovieData {

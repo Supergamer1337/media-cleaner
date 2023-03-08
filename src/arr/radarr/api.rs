@@ -28,3 +28,21 @@ where
 
     Ok(response)
 }
+
+pub async fn delete(path: &str, params: Option<Vec<(&str, &str)>>) -> Result<()> {
+    let config = &Config::global().radarr;
+    let client = reqwest::Client::new();
+    let params = params
+        .unwrap_or(vec![])
+        .into_iter()
+        .map(|param| format!("{}={}", param.0, param.1))
+        .join("&");
+
+    client
+        .delete(format!("{}/api/v3{}?{}", &config.url, path, params))
+        .header("X-Api-Key", &config.api_key)
+        .send()
+        .await?;
+
+    Ok(())
+}
