@@ -23,7 +23,7 @@ async fn main() -> Result<()> {
         std::process::exit(1);
     }
 
-    let requests = get_requests_data().await?;
+    let mut requests = get_requests_data().await?;
 
     if cfg!(target_os = "windows") {
         Command::new("cmd").arg("/C").arg("cls").status()?;
@@ -37,11 +37,10 @@ async fn main() -> Result<()> {
         .items(&requests)
         .interact()?;
 
-    chosen.into_iter().for_each(|selection| {
-        requests.get(selection).map(|request| {
-            println!("Deleting {}", request.get_title().as_ref().unwrap());
-        });
-    });
+    for selection in chosen.into_iter().rev() {
+        let media_item = requests.swap_remove(selection);
+        media_item.delete_item().await?;
+    }
 
     Ok(())
 }

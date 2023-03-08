@@ -5,6 +5,7 @@ use chrono::{DateTime, Utc};
 use color_eyre::Result;
 
 pub use self::radarr::MovieStatus;
+use self::sonarr::remove_sonarr_data_and_files;
 pub use self::sonarr::SeriesStatus;
 
 #[derive(Debug)]
@@ -40,4 +41,8 @@ pub async fn get_tv_data(tvdb_id: u32) -> Result<TvData> {
 fn date_string_to_date_time(date: &str) -> Result<DateTime<Utc>> {
     let date = DateTime::parse_from_rfc3339(date)?;
     Ok(date.with_timezone(&Utc))
+}
+
+pub async fn remove_tv_data(id: i32) -> Result<()> {
+    sonarr::remove_sonarr_data_and_files(id).await
 }

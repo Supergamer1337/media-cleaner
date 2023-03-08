@@ -19,6 +19,12 @@ pub async fn get_sonarr_data(tvdb_id: u32) -> Result<TvData> {
     }
 }
 
+pub async fn remove_sonarr_data_and_files(sonarr_id: i32) -> Result<()> {
+    let path = format!("/series/{}", sonarr_id.to_string());
+    let params = vec![("deleteFiles", "true"), ("addImportListExclusion", "false")];
+    api::delete(path.as_str(), Some(params)).await
+}
+
 impl TvData {
     fn from_series_resource(series_resource: &SeriesResource) -> Result<Self> {
         Ok(TvData {

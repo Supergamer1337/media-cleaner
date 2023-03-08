@@ -46,7 +46,7 @@ pub async fn delete(path: &str) -> Result<()> {
     let client = reqwest::Client::new();
 
     client
-        .delete(path)
+        .delete(format!("{}/api/v1{}", &config.url, path))
         .header("X-API-Key", &config.api_key)
         .send()
         .await?;
