@@ -1,11 +1,13 @@
+use std::collections::VecDeque;
+
 use serde::{de::DeserializeOwned, Deserialize};
 
 pub type Response<T>
 where
     T: DeserializeOwned,
-= Vec<T>;
+= VecDeque<T>;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct SeriesResource {
     pub id: i32,
@@ -25,7 +27,7 @@ pub enum SeriesStatus {
     Deleted,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct SeriesStatisticsResource {
     pub season_count: i32,

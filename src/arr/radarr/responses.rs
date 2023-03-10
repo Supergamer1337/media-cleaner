@@ -1,6 +1,8 @@
+use std::collections::VecDeque;
+
 use serde::Deserialize;
 
-pub type Response<T> = Vec<T>;
+pub type Response<T> = VecDeque<T>;
 
 #[derive(Debug, Deserialize)]
 pub struct MovieResource {

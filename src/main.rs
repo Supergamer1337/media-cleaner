@@ -5,6 +5,7 @@ mod overseerr;
 mod shared;
 mod tautulli;
 mod tmdb;
+mod utils;
 
 use std::{io, process::Command};
 
@@ -43,10 +44,8 @@ async fn main() -> Result<()> {
     println!("Are you sure you want to delete the following items (y/n):");
     chosen.iter().for_each(|selection| {
         if let Some(media_item) = requests.get(*selection) {
-            let default = "Unknown".to_string();
-            let title = media_item.get_title().as_ref().unwrap_or(&default);
-            let media_type = media_item.get_media_type();
-            println!("- {} - {}", title, media_type.to_string());
+            let media_type = media_item.media_type;
+            println!("- {} - {}", &media_item.title, media_type.to_string());
         } else {
             println!("- Unknown item");
         }
@@ -61,7 +60,7 @@ async fn main() -> Result<()> {
 
     for selection in chosen.into_iter().rev() {
         let media_item = requests.swap_remove(selection);
-        media_item.delete_item().await?;
+        media_item.remove_from_server().await?;
     }
 
     Ok(())

@@ -2,7 +2,7 @@ use color_eyre::Result;
 use serde::de::DeserializeOwned;
 
 use super::responses::ResponseObj;
-use crate::config::Config;
+use crate::{config::Config, utils::create_param_string};
 
 trait Response<TypeParam> {
     type TypeParam;
@@ -15,14 +15,7 @@ where
     let config = &Config::global().tautulli;
     let client = reqwest::Client::new();
 
-    let cmd = command.to_string()
-        + "&"
-        + &params
-            .unwrap_or(vec![])
-            .into_iter()
-            .map(|param| format!("{}={}", param.0, param.1))
-            .collect::<Vec<String>>()
-            .join("&");
+    let cmd = command.to_string() + "&" + &create_param_string(params);
 
     let url = format!(
         "{}/api/v2?apikey={}&cmd={}",
