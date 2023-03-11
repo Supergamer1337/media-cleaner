@@ -1,11 +1,8 @@
 use std::collections::VecDeque;
 
-use serde::{de::DeserializeOwned, Deserialize};
+use serde::Deserialize;
 
-pub type Response<T>
-where
-    T: DeserializeOwned,
-= VecDeque<T>;
+pub type Response<T> = VecDeque<T>;
 
 #[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]

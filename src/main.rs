@@ -29,7 +29,7 @@ async fn main() -> Result<()> {
     clear_screen()?;
 
     let chosen: Vec<usize> = MultiSelect::new()
-        .with_prompt("Choose what media to delete.")
+        .with_prompt("Choose what media to delete (SPACE to select, ENTER to confirm selection)")
         .max_length(5)
         .items(&requests)
         .interact()?;
@@ -41,7 +41,7 @@ async fn main() -> Result<()> {
 
     clear_screen()?;
 
-    println!("Are you sure you want to delete the following items (y/n):");
+    println!("Are you sure you want to delete the following items:");
     chosen.iter().for_each(|selection| {
         if let Some(media_item) = requests.get(*selection) {
             let media_type = media_item.media_type;
@@ -51,6 +51,7 @@ async fn main() -> Result<()> {
         }
     });
 
+    println!("\ny/n:");
     let user_input = get_user_input()?;
 
     if !user_input.starts_with("y") {

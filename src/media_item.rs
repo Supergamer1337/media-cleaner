@@ -17,10 +17,7 @@ pub struct MediaItem {
     pub title: Option<String>,
     rating_key: Option<String>,
     pub media_type: MediaType,
-    request: Option<MediaRequest>,
-    history: Option<WatchHistory>,
-    details: Option<ItemMetadata>,
-    arr_data: Option<ArrData>,
+    request: MediaRequest,
 }
 
 impl MediaItem {
@@ -29,10 +26,7 @@ impl MediaItem {
             title: None,
             rating_key: request.rating_key.clone(),
             media_type: request.media_type,
-            request: Some(request),
-            history: None,
-            details: None,
-            arr_data: None,
+            request: request,
         }
     }
 
@@ -42,18 +36,11 @@ impl MediaItem {
         let data = self.retrieve_arr_data();
         let res = try_join!(metadata, history, data)?;
 
-        let (rating_key, request) = match (self.rating_key, self.request) {
-            (Some(rating_key), Some(request)) => (rating_key, request),
-            _ => return Ok(None),
-        };
-
         if let (Some(details), Some(history), Some(arr_data)) = res {
             Ok(Some(CompleteMediaItem {
                 title: details.name.clone(),
-                rating_key: rating_key,
                 media_type: self.media_type,
-                request,
-                details,
+                request: self.request,
                 history,
                 arr_data,
             }))
@@ -74,12 +61,7 @@ impl MediaItem {
     }
 
     async fn retrieve_metadata(&self) -> Result<Option<ItemMetadata>> {
-        let request = match self.request {
-            Some(ref request) => request,
-            None => return Ok(None),
-        };
-
-        let tmdb_id = match request.tmdb_id {
+        let tmdb_id = match self.request.tmdb_id {
             Some(ref tmdb_id) => *tmdb_id,
             None => return Ok(None),
         };
@@ -90,14 +72,9 @@ impl MediaItem {
     }
 
     async fn retrieve_arr_data(&self) -> Result<Option<ArrData>> {
-        let request = match self.request {
-            Some(ref request) => request,
-            None => return Ok(None),
-        };
-
         let id = match self.media_type {
-            MediaType::Movie => request.tmdb_id,
-            MediaType::Tv => request.tvdb_id,
+            MediaType::Movie => self.request.tmdb_id,
+            MediaType::Tv => self.request.tvdb_id,
         };
 
         if let Some(id) = id {
@@ -111,11 +88,9 @@ impl MediaItem {
 #[derive(Debug)]
 pub struct CompleteMediaItem {
     pub title: String,
-    rating_key: String,
     pub media_type: MediaType,
     request: MediaRequest,
     history: WatchHistory,
-    details: ItemMetadata,
     arr_data: ArrData,
 }
 

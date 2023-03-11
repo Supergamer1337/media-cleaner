@@ -11,8 +11,8 @@ use crate::{shared::MediaType, tautulli::responses::ResponseObj};
 
 #[derive(Debug)]
 pub enum WatchHistory {
-    Movie(ItemWithHistory<UserMovieWatch>),
-    TvShow(ItemWithHistory<UserEpisodeWatch>),
+    Movie(ItemWatches<UserMovieWatch>),
+    TvShow(ItemWatches<UserEpisodeWatch>),
 }
 
 impl WatchHistory {
@@ -43,10 +43,7 @@ impl WatchHistory {
             })
             .collect();
 
-        WatchHistory::Movie(ItemWithHistory {
-            rating_key: rating_key.to_string(),
-            watches,
-        })
+        WatchHistory::Movie(watches)
     }
 
     fn create_tv_history(user_watches: BTreeMap<&String, &HistoryItem>, rating_key: &str) -> Self {
@@ -64,50 +61,38 @@ impl WatchHistory {
             })
             .collect();
 
-        WatchHistory::TvShow(ItemWithHistory {
-            rating_key: rating_key.to_string(),
-            watches,
-        })
+        WatchHistory::TvShow(watches)
     }
 }
 
 impl Display for WatchHistory {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Movie(movie) => {
-                if movie.watches.len() > 0 {
-                    write!(f, "Watch history:")?;
-                    for watch in movie.watches.iter() {
-                        write!(f, "\n      * {}", watch)?;
-                    }
-                    Ok(())
-                } else {
-                    write!(f, "No watch history.")
-                }
-            }
-            Self::TvShow(tv) => {
-                if tv.watches.len() > 0 {
-                    write!(f, "Watch history:")?;
-                    for watch in tv.watches.iter() {
-                        write!(f, "\n      * {}", watch)?;
-                    }
-                    Ok(())
-                } else {
-                    write!(f, "No watch history.")
-                }
-            }
+            Self::Movie(watches) => write_watches(f, watches),
+            Self::TvShow(watches) => write_watches(f, watches),
         }
     }
 }
 
-#[derive(Debug)]
-struct ItemWithHistory<T> {
-    rating_key: String,
-    watches: Vec<T>,
+fn write_watches<T>(f: &mut std::fmt::Formatter, watches: &ItemWatches<T>) -> std::fmt::Result
+where
+    T: Display,
+{
+    if watches.len() > 0 {
+        write!(f, "Watch history:")?;
+        for watch in watches.iter() {
+            write!(f, "\n      * {}", watch)?;
+        }
+        Ok(())
+    } else {
+        write!(f, "No watch history.")
+    }
 }
 
+pub type ItemWatches<T> = Vec<T>;
+
 #[derive(Debug)]
-struct UserEpisodeWatch {
+pub struct UserEpisodeWatch {
     display_name: String,
     last_watched: DateTime<Utc>,
     progress: u8,
@@ -131,9 +116,9 @@ impl Display for UserEpisodeWatch {
 
 #[derive(Debug)]
 pub struct UserMovieWatch {
-    pub display_name: String,
-    pub last_watched: DateTime<Utc>,
-    pub progress: u8,
+    display_name: String,
+    last_watched: DateTime<Utc>,
+    progress: u8,
 }
 
 impl Display for UserMovieWatch {

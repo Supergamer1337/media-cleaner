@@ -1,7 +1,6 @@
 use std::fmt::Debug;
 
 use color_eyre::Result;
-use itertools::Itertools;
 use serde::de::DeserializeOwned;
 
 use super::responses::Response;
