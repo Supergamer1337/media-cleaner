@@ -7,9 +7,8 @@ mod tautulli;
 mod tmdb;
 mod utils;
 
+use color_eyre::{eyre::eyre, Result};
 use std::{io, process::Command};
-
-use color_eyre::Result;
 
 use config::Config;
 use dialoguer::MultiSelect;
@@ -20,8 +19,7 @@ async fn main() -> Result<()> {
     color_eyre::install()?;
 
     if let Err(err) = Config::read_conf() {
-        eprintln!("Error reading config: {}", err);
-        std::process::exit(1);
+        return Err(eyre!("Failed to read the config, with the following error: {:?}.\nPlease make sure all fields are filled.", err));
     }
 
     let mut requests = get_requests_data().await?;

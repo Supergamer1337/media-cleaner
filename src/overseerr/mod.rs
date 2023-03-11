@@ -16,15 +16,12 @@ use crate::{
 #[derive(Debug)]
 pub struct MediaRequest {
     pub id: u32,
-    pub media_id: u32,
     pub tvdb_id: Option<u32>,
     pub tmdb_id: Option<u32>,
     pub rating_key: Option<String>,
-    pub rating_key_4k: Option<String>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
     pub requested_by: String,
-    pub request_status: responses::RequestStatus,
     pub media_status: responses::MediaStatus,
     pub media_type: MediaType,
 }
@@ -67,14 +64,11 @@ impl MediaRequest {
 
         Ok(MediaRequest {
             id: response.id,
-            media_id: response.media.id,
             tvdb_id: response.media.tvdb_id,
             tmdb_id: response.media.tmdb_id,
             rating_key: response.media.rating_key.clone(),
-            rating_key_4k: response.media.rating_key_4k.clone(),
             created_at: created_at.with_timezone(&Utc),
             updated_at: updated_at.with_timezone(&Utc),
-            request_status: response.status,
             media_status: response.media.status,
             media_type: response.media.media_type,
             requested_by,

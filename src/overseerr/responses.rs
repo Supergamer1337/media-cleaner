@@ -36,7 +36,6 @@ pub struct MediaResponse {
     pub tmdb_id: Option<u32>,
     pub tvdb_id: Option<u32>,
     pub rating_key: Option<String>,
-    pub rating_key_4k: Option<String>,
     pub status: MediaStatus,
     pub media_type: MediaType,
 }
@@ -71,14 +70,4 @@ pub struct MediaRequestResponse {
     pub created_at: String,
     pub updated_at: Option<String>,
     pub requested_by: UserResponse,
-    pub status: RequestStatus,
-}
-
-#[derive(Debug, Deserialize_repr, Clone, Copy)]
-#[serde(rename_all = "camelCase")]
-#[repr(u8)]
-pub enum RequestStatus {
-    PendingApproval = 1,
-    Approved,
-    Declined,
 }
