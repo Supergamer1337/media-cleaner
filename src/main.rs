@@ -28,9 +28,10 @@ async fn main() -> Result<()> {
 
     clear_screen()?;
 
+    let items_to_show = Config::global().items_shown;
     let chosen: Vec<usize> = MultiSelect::new()
         .with_prompt("Choose what media to delete (SPACE to select, ENTER to confirm selection)")
-        .max_length(5)
+        .max_length(items_to_show)
         .items(&requests)
         .interact()?;
 

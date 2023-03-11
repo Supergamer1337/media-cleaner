@@ -5,6 +5,7 @@ use std::fs;
 
 #[derive(Debug, Deserialize)]
 pub struct Config {
+    pub items_shown: usize,
     pub overseerr: Overseerr,
     pub tautulli: Tautulli,
     pub tmdb: TMDB,
