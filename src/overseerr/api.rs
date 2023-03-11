@@ -1,4 +1,4 @@
-use color_eyre::Result;
+use color_eyre::{eyre::eyre, Result};
 use serde::de::DeserializeOwned;
 
 use super::responses::RequestResponse;
@@ -11,13 +11,17 @@ where
     let client = reqwest::Client::new();
     let config = &Config::global().overseerr;
 
-    let mut response_data: RequestResponse<T> = client
+    let response = client
         .get(format!("{}/api/v1{}?take=100", &config.url, path))
         .header("X-API-Key", &config.api_key)
         .send()
-        .await?
-        .json()
         .await?;
+
+    if !(response.status().as_u16() >= 200 && response.status().as_u16() < 300) {
+        return Err(eyre!("Response did from Overseerr did not have a valid 200-class response. Check your API key."));
+    }
+
+    let mut response_data: RequestResponse<T> = response.json().await?;
 
     let page_size = response_data.page_info.page_size;
     for page in 1..response_data.page_info.pages {

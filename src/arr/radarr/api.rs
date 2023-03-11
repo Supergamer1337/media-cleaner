@@ -1,4 +1,4 @@
-use color_eyre::Result;
+use color_eyre::{eyre::eyre, Result};
 use serde::de::DeserializeOwned;
 
 use crate::{config::Config, utils::create_param_string};
@@ -17,9 +17,15 @@ where
         .get(format!("{}/api/v3{}?{}", config.url, path, params))
         .header("X-Api-Key", &config.api_key)
         .send()
-        .await?
-        .json()
         .await?;
+
+    if !(response.status().as_u16() >= 200 && response.status().as_u16() < 300) {
+        return Err(eyre!(
+            "Response did from Radarr did not have a valid 200-class response. Check your API key."
+        ));
+    }
+
+    let response = response.json().await?;
 
     Ok(response)
 }

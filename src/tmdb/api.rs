@@ -1,4 +1,4 @@
-use color_eyre::Result;
+use color_eyre::{eyre::eyre, Result};
 use reqwest::Client;
 use serde::de::DeserializeOwned;
 
@@ -16,7 +16,15 @@ where
         path, config.v3_key, params
     );
 
-    let movie_details: T = client.get(path).send().await?.json().await?;
+    let response = client.get(path).send().await?;
 
-    Ok(movie_details)
+    if !(response.status().as_u16() >= 200 && response.status().as_u16() < 300) {
+        return Err(eyre!(
+            "Response did from TMDB did not have a valid 200-class response. Check your API key."
+        ));
+    }
+
+    let response = response.json().await?;
+
+    Ok(response)
 }

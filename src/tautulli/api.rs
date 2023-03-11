@@ -1,4 +1,4 @@
-use color_eyre::Result;
+use color_eyre::{eyre::eyre, Result};
 use serde::de::DeserializeOwned;
 
 use super::responses::ResponseObj;
@@ -22,7 +22,13 @@ where
         config.url, config.api_key, cmd
     );
 
-    let response = client.get(&url).send().await?.json().await?;
+    let response = client.get(&url).send().await?;
+
+    if !(response.status().as_u16() >= 200 && response.status().as_u16() < 300) {
+        return Err(eyre!("Response did from Tautulli did not have a valid 200-class response. Check your API key."));
+    }
+
+    let response = response.json().await?;
 
     Ok(response)
 }
