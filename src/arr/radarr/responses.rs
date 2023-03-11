@@ -5,6 +5,7 @@ use serde::Deserialize;
 pub type Response<T> = VecDeque<T>;
 
 #[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct MovieResource {
     pub id: i32,
     pub title: Option<String>,

@@ -1,10 +1,12 @@
 mod api;
 mod responses;
 
+use std::fmt::Display;
+
 pub use responses::MediaStatus;
 
 use chrono::prelude::*;
-use color_eyre::Result;
+use color_eyre::{owo_colors::OwoColorize, Result};
 
 use crate::{
     overseerr::responses::{MediaRequestResponse, RequestResponse},
@@ -77,5 +79,20 @@ impl MediaRequest {
             media_type: response.media.media_type,
             requested_by,
         })
+    }
+}
+
+impl Display for MediaRequest {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "Requested by {} at {}, which is {} days ago.",
+            self.requested_by.yellow(),
+            self.updated_at.format("%d/%m/%Y").blue(),
+            Utc::now()
+                .signed_duration_since(self.updated_at)
+                .num_days()
+                .red()
+        )
     }
 }

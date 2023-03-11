@@ -1,4 +1,4 @@
-use color_eyre::{Report, Result};
+use color_eyre::{owo_colors::OwoColorize, Report, Result};
 use futures::future::{self};
 use itertools::Itertools;
 use std::fmt::{Debug, Display};
@@ -153,6 +153,18 @@ pub async fn get_requests_data() -> Result<Vec<CompleteMediaItem>> {
 
 impl Display for CompleteMediaItem {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str(&format!("{:?}", self))
+        write!(
+            f,
+            "{} {}.",
+            self.media_type.to_string().blue(),
+            self.title.green()
+        )?;
+        write!(f, " {}", self.request)?;
+
+        write!(f, "\n      {}", self.arr_data)?;
+
+        write!(f, "\n      {}", self.history)?;
+
+        write!(f, "\n")
     }
 }

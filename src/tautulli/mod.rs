@@ -2,9 +2,9 @@ mod api;
 mod responses;
 
 use chrono::prelude::*;
-use color_eyre::Result;
+use color_eyre::{owo_colors::OwoColorize, Result};
 use serde::de::DeserializeOwned;
-use std::collections::BTreeMap;
+use std::{collections::BTreeMap, fmt::Display};
 
 use self::responses::{History, HistoryItem, HistoryMovieItem};
 use crate::{shared::MediaType, tautulli::responses::ResponseObj};
@@ -71,19 +71,62 @@ impl WatchHistory {
     }
 }
 
-#[derive(Debug)]
-pub struct ItemWithHistory<T> {
-    pub rating_key: String,
-    pub watches: Vec<T>,
+impl Display for WatchHistory {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Movie(movie) => {
+                if movie.watches.len() > 0 {
+                    write!(f, "Watch history:")?;
+                    for watch in movie.watches.iter() {
+                        write!(f, "\n      * {}", watch)?;
+                    }
+                    Ok(())
+                } else {
+                    write!(f, "No watch history.")
+                }
+            }
+            Self::TvShow(tv) => {
+                if tv.watches.len() > 0 {
+                    write!(f, "Watch history:")?;
+                    for watch in tv.watches.iter() {
+                        write!(f, "\n      * {}", watch)?;
+                    }
+                    Ok(())
+                } else {
+                    write!(f, "No watch history.")
+                }
+            }
+        }
+    }
 }
 
 #[derive(Debug)]
-pub struct UserEpisodeWatch {
-    pub display_name: String,
-    pub last_watched: DateTime<Utc>,
-    pub progress: u8,
-    pub season: u32,
-    pub episode: u32,
+struct ItemWithHistory<T> {
+    rating_key: String,
+    watches: Vec<T>,
+}
+
+#[derive(Debug)]
+struct UserEpisodeWatch {
+    display_name: String,
+    last_watched: DateTime<Utc>,
+    progress: u8,
+    season: u32,
+    episode: u32,
+}
+
+impl Display for UserEpisodeWatch {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "Last watch by {}, was at {}. Season {} Episode {}, with {} complete.",
+            self.display_name.yellow(),
+            self.last_watched.format("%d-%m-%Y").blue(),
+            self.season.yellow(),
+            self.episode.yellow(),
+            format!("{}%", self.progress).blue()
+        )
+    }
 }
 
 #[derive(Debug)]
@@ -91,6 +134,18 @@ pub struct UserMovieWatch {
     pub display_name: String,
     pub last_watched: DateTime<Utc>,
     pub progress: u8,
+}
+
+impl Display for UserMovieWatch {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "Last watch by {} at {}, with {} progress.",
+            self.display_name.yellow(),
+            self.last_watched.format("%d-%m-%Y").blue(),
+            format!("{}%", self.progress).blue()
+        )
+    }
 }
 
 pub async fn get_item_watches(rating_key: &str, media_type: &MediaType) -> Result<WatchHistory> {

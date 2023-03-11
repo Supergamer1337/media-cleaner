@@ -1,7 +1,10 @@
 mod radarr;
 mod sonarr;
 
+use std::fmt::Display;
+
 use chrono::{DateTime, Utc};
+use color_eyre::owo_colors::OwoColorize;
 use color_eyre::Result;
 
 pub use self::radarr::MovieStatus;
@@ -30,10 +33,18 @@ impl ArrData {
     }
 }
 
+impl Display for ArrData {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Movie(movie) => write!(f, "{}", movie),
+            Self::Tv(tv) => write!(f, "{}", tv),
+        }
+    }
+}
+
 #[derive(Debug)]
 pub struct MovieData {
     id: i32,
-    title: Option<String>,
     status: MovieStatus,
     size_on_disk: Option<i64>,
     digital_release: Option<DateTime<Utc>>,
@@ -46,7 +57,6 @@ impl MovieData {
 
         Ok(Self {
             id: data.id,
-            title: data.title,
             status: data.status,
             size_on_disk: data.size_on_disk,
             digital_release: get_potential_date_time(data.digital_release)?,
@@ -59,10 +69,31 @@ impl MovieData {
     }
 }
 
+impl Display for MovieData {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let digital_release = format_potential_date(self.digital_release);
+
+        let physical_release = format_potential_date(self.physical_release);
+
+        let size: String = match self.size_on_disk {
+            Some(size) => human_file_size(size),
+            None => "none".into(),
+        };
+
+        write!(
+            f,
+            "It was released {} digitally and {} physically. Current status is {:?}, and size is {}",
+            digital_release.blue(),
+            physical_release.blue(),
+            self.status.green(),
+            size.red()
+        )
+    }
+}
+
 #[derive(Debug)]
 pub struct TvData {
     id: i32,
-    title: Option<String>,
     status: SeriesStatus,
     last_airing: Option<DateTime<Utc>>,
     next_airing: Option<DateTime<Utc>>,
@@ -81,7 +112,6 @@ impl TvData {
 
         Ok(Self {
             id: data.id,
-            title: data.title,
             last_airing: get_potential_date_time(data.previous_airing)?,
             next_airing: get_potential_date_time(data.next_airing)?,
             status: data.status,
@@ -89,6 +119,25 @@ impl TvData {
             percent_of_episodes_on_disk: data.statistics.percent_of_episodes,
             size_on_disk: data.statistics.size_on_disk,
         })
+    }
+}
+
+impl Display for TvData {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let size: String = human_file_size(self.size_on_disk);
+        let last_aired = format_potential_date(self.last_airing);
+        let next_airing = format_potential_date(self.next_airing);
+
+        write!(
+            f,
+            "Last airing was {} and the next {}. Current status is {:?}, and size is {}. It has {} seasons, with {} of episodes downloaded.",
+            last_aired.blue(),
+            next_airing.blue(),
+            self.status.green(),
+            size.red(),
+            self.season_count.yellow(),
+            &format!("{}%", self.percent_of_episodes_on_disk).blue()
+        )
     }
 }
 
@@ -100,4 +149,17 @@ fn get_potential_date_time(potential_date: Option<String>) -> Result<Option<Date
         }
         None => Ok(None),
     }
+}
+
+fn format_potential_date(potential_date: Option<DateTime<Utc>>) -> String {
+    match potential_date {
+        Some(release) => release.format("%d-%m-%Y").to_string(),
+        None => "never(?)".into(),
+    }
+}
+
+fn human_file_size(size: i64) -> String {
+    let gig_size = 1000000000.0;
+    let gigs: f64 = size as f64 / gig_size;
+    format!("{:.2}GB", gigs)
 }
