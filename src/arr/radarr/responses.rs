@@ -10,7 +10,7 @@ pub struct MovieResource {
     pub id: i32,
     pub title: Option<String>,
     pub status: MovieStatus,
-    pub size_on_disk: Option<i64>,
+    pub size_on_disk: i64,
     pub digital_release: Option<String>,
     pub physical_release: Option<String>,
 }

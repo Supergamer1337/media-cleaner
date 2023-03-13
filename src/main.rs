@@ -14,6 +14,8 @@ use config::Config;
 use dialoguer::MultiSelect;
 use media_item::{gather_requests_data, CompleteMediaItem};
 
+use crate::utils::human_file_size;
+
 #[tokio::main]
 async fn main() -> Result<()> {
     color_eyre::install()?;
@@ -119,7 +121,23 @@ fn choose_items_to_delete(requests: &Vec<CompleteMediaItem>) -> Result<Vec<usize
 }
 
 fn verify_chosen(requests: &Vec<CompleteMediaItem>, chosen: &Vec<usize>) -> Result<()> {
-    println!("Are you sure you want to delete the following items:");
+    let total_size: String = human_file_size(
+        chosen
+            .iter()
+            .filter_map(|selection| {
+                if let Some(media_item) = requests.get(*selection) {
+                    Some(media_item.get_disk_size())
+                } else {
+                    None
+                }
+            })
+            .sum(),
+    );
+
+    println!(
+        "Are you sure you want to delete the following items ({}):",
+        total_size
+    );
     chosen.iter().for_each(|selection| {
         if let Some(media_item) = requests.get(*selection) {
             let media_type = media_item.media_type;

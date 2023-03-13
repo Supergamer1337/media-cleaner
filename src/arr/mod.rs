@@ -11,6 +11,7 @@ pub use self::radarr::MovieStatus;
 pub use self::sonarr::SeriesStatus;
 use crate::config::Config;
 use crate::shared::MediaType;
+use crate::utils::human_file_size;
 
 pub fn movie_manger_active() -> bool {
     match Config::global().radarr {
@@ -46,6 +47,13 @@ impl ArrData {
             Self::Tv(tv) => tv.remove_data().await,
         }
     }
+
+    pub fn get_disk_size(&self) -> i64 {
+        match self {
+            Self::Movie(movie) => movie.size_on_disk,
+            Self::Tv(tv) => tv.size_on_disk,
+        }
+    }
 }
 
 impl Display for ArrData {
@@ -61,7 +69,7 @@ impl Display for ArrData {
 pub struct MovieData {
     id: i32,
     status: MovieStatus,
-    size_on_disk: Option<i64>,
+    size_on_disk: i64,
     digital_release: Option<DateTime<Utc>>,
     physical_release: Option<DateTime<Utc>>,
 }
@@ -90,10 +98,7 @@ impl Display for MovieData {
 
         let physical_release = format_potential_date(self.physical_release);
 
-        let size: String = match self.size_on_disk {
-            Some(size) => human_file_size(size),
-            None => "none".into(),
-        };
+        let size: String = human_file_size(self.size_on_disk);
 
         write!(
             f,
@@ -171,10 +176,4 @@ fn format_potential_date(potential_date: Option<DateTime<Utc>>) -> String {
         Some(release) => release.format("%d-%m-%Y").to_string(),
         None => "never(?)".into(),
     }
-}
-
-fn human_file_size(size: i64) -> String {
-    let gig_size = 1000000000.0;
-    let gigs: f64 = size as f64 / gig_size;
-    format!("{:.2}GB", gigs)
 }

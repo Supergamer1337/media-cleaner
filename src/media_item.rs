@@ -123,6 +123,10 @@ impl CompleteMediaItem {
         self.arr_data.remove_data().await?;
         Ok(())
     }
+
+    pub fn get_disk_size(&self) -> i64 {
+        self.arr_data.get_disk_size()
+    }
 }
 
 pub async fn gather_requests_data() -> Result<(Vec<CompleteMediaItem>, Vec<Report>)> {

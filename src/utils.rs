@@ -24,3 +24,9 @@ pub fn create_api_error_message(code: u16, service: &str) -> String {
         }
     }
 }
+
+pub fn human_file_size(size: i64) -> String {
+    let gig_size = 1000000000.0;
+    let gigs: f64 = size as f64 / gig_size;
+    format!("{:.2}GB", gigs)
+}
