@@ -1,4 +1,4 @@
-use color_eyre::{owo_colors::OwoColorize, Report, Result};
+use color_eyre::{eyre::eyre, owo_colors::OwoColorize, Report, Result};
 use futures::future::{self};
 use itertools::Itertools;
 use std::fmt::{Debug, Display};
@@ -6,7 +6,7 @@ use tokio::try_join;
 
 use crate::{
     arr::ArrData,
-    overseerr::MediaRequest,
+    overseerr::{MediaRequest, MediaStatus},
     shared::MediaType,
     tautulli::{self, WatchHistory},
     tmdb::ItemMetadata,
@@ -30,57 +30,73 @@ impl MediaItem {
         }
     }
 
-    pub async fn into_complete(self) -> Result<Option<CompleteMediaItem>> {
+    pub async fn into_complete(self) -> Result<CompleteMediaItem> {
         let metadata = self.retrieve_metadata();
         let history = self.retrieve_history();
         let data = self.retrieve_arr_data();
         let res = try_join!(metadata, history, data)?;
 
-        if let (Some(details), Some(history), Some(arr_data)) = res {
-            Ok(Some(CompleteMediaItem {
-                title: details.name.clone(),
-                media_type: self.media_type,
-                request: self.request,
-                history,
-                arr_data,
-            }))
-        } else {
-            Ok(None)
+        let (details, history, arr_data) = res;
+        Ok(CompleteMediaItem {
+            title: details.name.clone(),
+            media_type: self.media_type,
+            request: self.request,
+            history,
+            arr_data,
+        })
+    }
+
+    pub fn is_available(&self) -> bool {
+        match &self.request.media_status {
+            MediaStatus::Available | MediaStatus::PartiallyAvailable => true,
+            _ => false,
         }
     }
 
-    async fn retrieve_history(&self) -> Result<Option<WatchHistory>> {
+    async fn retrieve_history(&self) -> Result<WatchHistory> {
         let rating_key = match self.rating_key {
             Some(ref rating_key) => rating_key,
-            None => return Ok(None),
+            None => {
+                return Err(eyre!(
+                "No rating key was found for request. Unable to gather watch history from Tautulli."
+            ))
+            }
         };
 
-        Ok(Some(
-            tautulli::get_item_watches(rating_key, &self.media_type).await?,
-        ))
+        tautulli::get_item_watches(rating_key, &self.media_type).await
     }
 
-    async fn retrieve_metadata(&self) -> Result<Option<ItemMetadata>> {
+    async fn retrieve_metadata(&self) -> Result<ItemMetadata> {
         let tmdb_id = match self.request.tmdb_id {
             Some(ref tmdb_id) => *tmdb_id,
-            None => return Ok(None),
+            None => {
+                return Err(eyre!(
+                    "No TMDB Id was found for item. Unable to gather metadata for item."
+                ))
+            }
         };
 
-        Ok(Some(
-            ItemMetadata::get_data(self.media_type, tmdb_id).await?,
-        ))
+        ItemMetadata::get_data(self.media_type, tmdb_id).await
     }
 
-    async fn retrieve_arr_data(&self) -> Result<Option<ArrData>> {
+    async fn retrieve_arr_data(&self) -> Result<ArrData> {
         let id = match self.media_type {
             MediaType::Movie => self.request.tmdb_id,
             MediaType::Tv => self.request.tvdb_id,
         };
 
         if let Some(id) = id {
-            Ok(Some(ArrData::get_data(self.media_type, id).await?))
+            ArrData::get_data(self.media_type, id).await
         } else {
-            Ok(None)
+            let (tvdb_or_tmdb, sonarr_or_radarr) = match self.media_type {
+                MediaType::Tv => ("TVDB", "Sonarr"),
+                MediaType::Movie => ("TMDB", "Radarr"),
+            };
+            Err(eyre!(
+                "Unable to find {} Id, and therefore unable to gather data from {}.",
+                tvdb_or_tmdb,
+                sonarr_or_radarr
+            ))
         }
     }
 }
@@ -102,28 +118,38 @@ impl CompleteMediaItem {
     }
 }
 
-pub async fn get_requests_data() -> Result<Vec<CompleteMediaItem>> {
+pub async fn gather_requests_data() -> Result<(Vec<CompleteMediaItem>, Vec<Report>)> {
     let requests = MediaRequest::get_all().await?;
 
     let futures = requests
         .into_iter()
         .map(MediaItem::from_request)
+        .filter(|i| i.is_available())
         .map(|item| {
             tokio::spawn(async move {
                 let item = item.into_complete().await?;
 
-                Ok::<Option<CompleteMediaItem>, Report>(item)
+                Ok::<CompleteMediaItem, Report>(item)
             })
         });
 
-    Ok(future::try_join_all(futures)
+    let mut errors: Vec<Report> = Vec::new();
+
+    let complete_items = future::try_join_all(futures)
         .await?
         .into_iter()
-        .filter_map(|f| f.ok()) // TODO: Change this to give error messages to the user.
-        .filter_map(|f| f)
+        .filter_map(|f| match f {
+            Ok(item) => Some(item),
+            Err(err) => {
+                errors.push(err);
+                None
+            }
+        })
         .unique_by(|item| item.title.clone())
         .sorted_by(|item1, item2| item1.title.cmp(&item2.title))
-        .collect())
+        .collect();
+
+    Ok((complete_items, errors))
 }
 
 impl Display for CompleteMediaItem {

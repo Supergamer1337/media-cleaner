@@ -2,7 +2,10 @@ use color_eyre::{eyre::eyre, Result};
 use serde::de::DeserializeOwned;
 
 use super::responses::ResponseObj;
-use crate::{config::Config, utils::create_param_string};
+use crate::{
+    config::Config,
+    utils::{create_api_error_message, create_param_string},
+};
 
 trait Response<TypeParam> {
     type TypeParam;
@@ -25,7 +28,8 @@ where
     let response = client.get(&url).send().await?;
 
     if !(response.status().as_u16() >= 200 && response.status().as_u16() < 300) {
-        return Err(eyre!("Response did from Tautulli did not have a valid 200-class response. Check your API key."));
+        let code = response.status().as_u16();
+        return Err(eyre!(create_api_error_message(code, "Tautulli")));
     }
 
     let response = response.json().await?;

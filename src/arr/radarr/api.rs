@@ -1,7 +1,10 @@
 use color_eyre::{eyre::eyre, Result};
 use serde::de::DeserializeOwned;
 
-use crate::{config::Config, utils::create_param_string};
+use crate::{
+    config::Config,
+    utils::{create_api_error_message, create_param_string},
+};
 
 use super::responses::Response;
 
@@ -20,9 +23,8 @@ where
         .await?;
 
     if !(response.status().as_u16() >= 200 && response.status().as_u16() < 300) {
-        return Err(eyre!(
-            "Response did from Radarr did not have a valid 200-class response. Check your API key."
-        ));
+        let code = response.status().as_u16();
+        return Err(eyre!(create_api_error_message(code, "Radarr")));
     }
 
     let response = response.json().await?;

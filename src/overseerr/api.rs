@@ -2,7 +2,7 @@ use color_eyre::{eyre::eyre, Result};
 use serde::de::DeserializeOwned;
 
 use super::responses::RequestResponse;
-use crate::config::Config;
+use crate::{config::Config, utils::create_api_error_message};
 
 pub async fn get<T>(path: &str) -> Result<RequestResponse<T>>
 where
@@ -18,7 +18,8 @@ where
         .await?;
 
     if !(response.status().as_u16() >= 200 && response.status().as_u16() < 300) {
-        return Err(eyre!("Response did from Overseerr did not have a valid 200-class response. Check your API key."));
+        let code = response.status().as_u16();
+        return Err(eyre!(create_api_error_message(code, "Overseerr")));
     }
 
     let mut response_data: RequestResponse<T> = response.json().await?;
