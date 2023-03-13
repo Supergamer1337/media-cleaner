@@ -118,6 +118,7 @@ pub struct TvData {
     last_airing: Option<DateTime<Utc>>,
     next_airing: Option<DateTime<Utc>>,
     season_count: i32,
+    episodes_in_last_season: i32,
     percent_of_episodes_on_disk: f64,
     size_on_disk: i64,
 }
@@ -130,12 +131,22 @@ impl TvData {
     async fn get_data(tvdb_id: u32) -> Result<Self> {
         let data = sonarr::get_sonarr_data(tvdb_id).await?;
 
+        let episodes_in_last_season = data
+            .seasons
+            .iter()
+            .max_by_key(|s| s.season_number)
+            .map(|s| s.statistics.episode_count);
+
         Ok(Self {
             id: data.id,
             last_airing: get_potential_date_time(data.previous_airing)?,
             next_airing: get_potential_date_time(data.next_airing)?,
             status: data.status,
             season_count: data.statistics.season_count,
+            episodes_in_last_season: match episodes_in_last_season {
+                Some(count) => count,
+                None => 0,
+            },
             percent_of_episodes_on_disk: data.statistics.percent_of_episodes,
             size_on_disk: data.statistics.size_on_disk,
         })
@@ -150,13 +161,17 @@ impl Display for TvData {
 
         write!(
             f,
-            "Last airing was {} and the next {}. Current status is {:?}, and size is {}. It has {} seasons, with {} of episodes downloaded.",
+            "Last airing was {} and the next {}. Current status is {:?}, and size is {}. It has {} seasons, and {} episodes in the last season, with {} of episodes downloaded.",
             last_aired.blue(),
             next_airing.blue(),
             self.status.green(),
             size.red(),
             self.season_count.yellow(),
-            &format!("{}%", self.percent_of_episodes_on_disk).blue()
+            match self.episodes_in_last_season {
+                0 => "unknown".to_string(),
+                count => count.to_string()
+            }.yellow(),
+            &format!("{}%", self.percent_of_episodes_on_disk).blue(),
         )
     }
 }
