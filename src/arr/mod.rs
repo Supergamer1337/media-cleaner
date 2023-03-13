@@ -9,7 +9,22 @@ use color_eyre::Result;
 
 pub use self::radarr::MovieStatus;
 pub use self::sonarr::SeriesStatus;
+use crate::config::Config;
 use crate::shared::MediaType;
+
+pub fn movie_manger_active() -> bool {
+    match Config::global().radarr {
+        Some(_) => true,
+        None => false,
+    }
+}
+
+pub fn tv_manager_active() -> bool {
+    match Config::global().sonarr {
+        Some(_) => true,
+        None => false,
+    }
+}
 
 #[derive(Debug)]
 pub enum ArrData {

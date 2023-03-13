@@ -18,9 +18,7 @@ use media_item::{gather_requests_data, CompleteMediaItem};
 async fn main() -> Result<()> {
     color_eyre::install()?;
 
-    if let Err(err) = Config::read_conf() {
-        return Err(eyre!("Failed to read the config, with the following error: {:?}.\nPlease make sure all fields are filled.", err));
-    }
+    read_and_validate_config()?;
 
     let (mut requests, errs) = gather_requests_data().await?;
 
@@ -31,6 +29,19 @@ async fn main() -> Result<()> {
     let chosen = choose_items_to_delete(&requests)?;
 
     delete_chosen_items(&mut requests, &chosen).await?;
+
+    Ok(())
+}
+
+fn read_and_validate_config() -> Result<()> {
+    if let Err(err) = Config::read_conf() {
+        return Err(eyre!("Failed to read the config, with the following error: {}.\nPlease make sure all fields are filled.", err));
+    }
+
+    let config = Config::global();
+    if let (None, None) = (&config.radarr, &config.sonarr) {
+        return Err(eyre!("You have not configured Sonarr or Radarr. Application can't continue without at least one of these."));
+    }
 
     Ok(())
 }

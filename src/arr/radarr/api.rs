@@ -12,7 +12,14 @@ pub async fn get<T>(path: &str, params: Option<Vec<(&str, &str)>>) -> Result<Res
 where
     T: DeserializeOwned,
 {
-    let config = &Config::global().radarr;
+    let config = match &Config::global().radarr {
+        Some(ref radarr) => radarr,
+        None => {
+            return Err(eyre!(
+                "Tried to access radarr config, even though it is not defined."
+            ))
+        }
+    };
     let client = reqwest::Client::new();
     let params = create_param_string(params);
 
@@ -33,7 +40,14 @@ where
 }
 
 pub async fn delete(path: &str, params: Option<Vec<(&str, &str)>>) -> Result<()> {
-    let config = &Config::global().radarr;
+    let config = match &Config::global().radarr {
+        Some(ref radarr) => radarr,
+        None => {
+            return Err(eyre!(
+                "Tried to access radarr config, even though it is not defined."
+            ))
+        }
+    };
     let client = reqwest::Client::new();
     let params = create_param_string(params);
 

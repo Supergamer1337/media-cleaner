@@ -9,8 +9,8 @@ pub struct Config {
     pub overseerr: Overseerr,
     pub tautulli: Tautulli,
     pub tmdb: TMDB,
-    pub sonarr: Sonarr,
-    pub radarr: Radarr,
+    pub sonarr: Option<Sonarr>,
+    pub radarr: Option<Radarr>,
 }
 
 #[derive(Debug, Deserialize)]

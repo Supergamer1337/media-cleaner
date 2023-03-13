@@ -5,7 +5,7 @@ use std::fmt::{Debug, Display};
 use tokio::try_join;
 
 use crate::{
-    arr::ArrData,
+    arr::{self, ArrData},
     overseerr::{MediaRequest, MediaStatus},
     shared::MediaType,
     tautulli::{self, WatchHistory},
@@ -50,6 +50,13 @@ impl MediaItem {
         match &self.request.media_status {
             MediaStatus::Available | MediaStatus::PartiallyAvailable => true,
             _ => false,
+        }
+    }
+
+    pub fn has_manager_active(&self) -> bool {
+        match &self.request.media_type {
+            MediaType::Movie => arr::movie_manger_active(),
+            MediaType::Tv => arr::tv_manager_active(),
         }
     }
 
@@ -124,7 +131,7 @@ pub async fn gather_requests_data() -> Result<(Vec<CompleteMediaItem>, Vec<Repor
     let futures = requests
         .into_iter()
         .map(MediaItem::from_request)
-        .filter(|i| i.is_available())
+        .filter(|i| i.is_available() && i.has_manager_active())
         .map(|item| {
             tokio::spawn(async move {
                 let item = item.into_complete().await?;

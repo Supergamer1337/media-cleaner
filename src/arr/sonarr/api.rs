@@ -13,7 +13,14 @@ pub async fn get<T>(path: &str, params: Option<Vec<(&str, &str)>>) -> Result<Res
 where
     T: DeserializeOwned + Debug,
 {
-    let config = &Config::global().sonarr;
+    let config = match &Config::global().sonarr {
+        Some(sonarr) => sonarr,
+        None => {
+            return Err(eyre!(
+                "Tried to access Sonarr config, even though it is not defined."
+            ))
+        }
+    };
     let client = reqwest::Client::new();
     let params = create_param_string(params);
 
@@ -34,7 +41,14 @@ where
 }
 
 pub async fn delete(path: &str, params: Option<Vec<(&str, &str)>>) -> Result<()> {
-    let config = &Config::global().sonarr;
+    let config = match &Config::global().sonarr {
+        Some(sonarr) => sonarr,
+        None => {
+            return Err(eyre!(
+                "Tried to access Sonarr config, even though it is not defined."
+            ))
+        }
+    };
     let client = reqwest::Client::new();
     let params = create_param_string(params);
 
