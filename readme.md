@@ -30,7 +30,11 @@ radarr:
     api_key: YOUR_API_KEY
 ```
 
-You can get your api keys from the respective applications. A simple search should help you find it. **ALSO MAKE SURE CSRF IS TURNED OFF IN OVERSEERR.** The program currently doesn't work with it.
+All fields have to be filled in, except for Sonarr or Radarr (though if their root is listed, all values have to be filled). If both Sonarr and Radarr are missing, the program will give you an error, as it requires at least one of them to be active.
+
+You can get your api keys from the respective applications. A simple search should help you find it.
+
+**ALSO MAKE SURE CSRF IS TURNED OFF IN OVERSEERR.**
 
 Once you have your config file, you can run the program with `./media-cleaner` (or `.\media-cleaner.exe` on Windows). If nothing is shown immediately, you have to wait for it to finish all the requests to gather the appropriate data. Afterwards it will bring up a list of all your requests, with the media data associated with that item (watch history, space, etc.), simply select the ones you want to remove (with space) and press enter. This will (after a confirmations screen) remove the request from Overseerr and tell Sonarr and Radarr to remove the show and its files.
 
