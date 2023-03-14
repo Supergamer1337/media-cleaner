@@ -10,29 +10,32 @@ Just download the latest release for your platform from the [releases page](http
 
 ## Usage
 
+_Warning:_ As of right now, this program does not support Overseerr 4k instances, and only works in the cases where you use the normal Sonarr/Radarr instances.
+
 Make sure you have a config file in the same directory as the executable (or more specifically the root of the working directory when you launch it). It should be named `config.yaml` and look something like this (this was chosen instead of CLI arguments to make it easier for repeated use):
 
 ```yaml
 items_shown: 5 # The number of items to show in the list of items to select. Useful to limit if your terminal is small, as it can be quite buggy if the list doesn't fit.
+plex:
+    url: https://YOUR_PLEX_URL
+    token: YOUR_PLEX_TOKEN
 overseerr:
     url: https://YOUR_OVERSEERR_URL
     api_key: YOUR_API_KEY
 tautulli:
     url: https://YOUR_TAUTULLI_URL
     api_key: YOUR_API_KEY
-tmdb:
-    v3_key: YOUR_API_KEY
-sonarr:
+sonarr: # If you don't use Sonarr, just leave this section out
     url: https://YOUR_SONARR_URL
     api_key: YOUR_API_KEY
-radarr:
+radarr: # If you don't use Radarr, just leave this section out
     url: https://YOUR_RADARR_URL
     api_key: YOUR_API_KEY
 ```
 
 All fields have to be filled in, except for Sonarr or Radarr (though if their root is listed, all values have to be filled). If both Sonarr and Radarr are missing, the program will give you an error, as it requires at least one of them to be active.
 
-You can get your api keys from the respective applications. A simple search should help you find it.
+You can get your api keys from the respective applications. A simple search should help you find it. For the Plex token, you can follow [this guide](https://support.plex.tv/articles/204059436-finding-an-authentication-token-x-plex-token/).
 
 **ALSO MAKE SURE CSRF IS TURNED OFF IN OVERSEERR.**
 
