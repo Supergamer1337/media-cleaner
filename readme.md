@@ -15,7 +15,10 @@ _Warning:_ As of right now, this program does not support Overseerr 4k instances
 Make sure you have a config file in the same directory as the executable (or more specifically the root of the working directory when you launch it). It should be named `config.yaml` and look something like this (this was chosen instead of CLI arguments to make it easier for repeated use):
 
 ```yaml
-items_shown: 5 # The number of items to show in the list of items to select. Useful to limit if your terminal is small, as it can be quite buggy if the list doesn't fit.
+# The number of items to show in the list of items to select.
+# Useful to limit if your terminal is small, as it can be quite buggy if the list doesn't fit.
+# Default to 5 if not specified.
+items_shown: 5
 plex:
     url: https://YOUR_PLEX_URL
     token: YOUR_PLEX_TOKEN

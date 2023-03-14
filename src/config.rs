@@ -5,6 +5,7 @@ use std::fs;
 
 #[derive(Debug, Deserialize)]
 pub struct Config {
+    #[serde(default = "default_items_shown")]
     pub items_shown: usize,
     pub plex: Plex,
     pub overseerr: Overseerr,
@@ -53,9 +54,14 @@ impl Config {
     pub fn read_conf() -> Result<()> {
         let reader = fs::File::open("config.yaml")?;
         let conf: Config = serde_yaml::from_reader(reader)?;
+
         INSTANCE
             .set(conf)
             .expect("Config has already been initialized.");
         Ok(())
     }
+}
+
+fn default_items_shown() -> usize {
+    5
 }
