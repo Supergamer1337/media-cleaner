@@ -9,7 +9,6 @@ pub struct Config {
     pub plex: Plex,
     pub overseerr: Overseerr,
     pub tautulli: Tautulli,
-    pub tmdb: TMDB,
     pub sonarr: Option<Sonarr>,
     pub radarr: Option<Radarr>,
 }
@@ -30,11 +29,6 @@ pub struct Overseerr {
 pub struct Tautulli {
     pub url: String,
     pub api_key: String,
-}
-
-#[derive(Debug, Deserialize)]
-pub struct TMDB {
-    pub v3_key: String,
 }
 
 #[derive(Debug, Deserialize)]

@@ -16,6 +16,7 @@ use crate::{
 pub struct MediaItem {
     pub title: Option<String>,
     rating_key: Option<String>,
+    manager_id: Option<i32>,
     pub media_type: MediaType,
     request: MediaRequest,
 }
@@ -25,6 +26,7 @@ impl MediaItem {
         Self {
             title: None,
             rating_key: request.rating_key.clone(),
+            manager_id: request.manager_id,
             media_type: request.media_type,
             request: request,
         }
@@ -87,22 +89,11 @@ impl MediaItem {
     }
 
     async fn retrieve_arr_data(&self) -> Result<ArrData> {
-        let id = match self.media_type {
-            MediaType::Movie => self.request.tmdb_id,
-            MediaType::Tv => self.request.tvdb_id,
-        };
-
-        if let Some(id) = id {
+        if let Some(id) = self.manager_id {
             ArrData::get_data(self.media_type, id).await
         } else {
-            let (tvdb_or_tmdb, sonarr_or_radarr) = match self.media_type {
-                MediaType::Tv => ("TVDB", "Sonarr"),
-                MediaType::Movie => ("TMDB", "Radarr"),
-            };
             Err(eyre!(
-                "Unable to find {} Id, and therefore unable to gather data from {}.",
-                tvdb_or_tmdb,
-                sonarr_or_radarr
+                "No *arr id was found for request. Unable to gather file data."
             ))
         }
     }

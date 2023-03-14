@@ -34,10 +34,10 @@ pub enum ArrData {
 }
 
 impl ArrData {
-    pub async fn get_data(media_type: MediaType, tv_or_tmdb_id: u32) -> Result<Self> {
+    pub async fn get_data(media_type: MediaType, id: i32) -> Result<Self> {
         match media_type {
-            MediaType::Movie => Ok(Self::Movie(MovieData::get_data(tv_or_tmdb_id).await?)),
-            MediaType::Tv => Ok(Self::Tv(TvData::get_data(tv_or_tmdb_id).await?)),
+            MediaType::Movie => Ok(Self::Movie(MovieData::get_data(id).await?)),
+            MediaType::Tv => Ok(Self::Tv(TvData::get_data(id).await?)),
         }
     }
 
@@ -75,8 +75,8 @@ pub struct MovieData {
 }
 
 impl MovieData {
-    async fn get_data(tmdb_id: u32) -> Result<Self> {
-        let data = radarr::get_radarr_data(tmdb_id).await?;
+    async fn get_data(id: i32) -> Result<Self> {
+        let data = radarr::get_radarr_data(id).await?;
 
         Ok(Self {
             id: data.id,
@@ -128,8 +128,8 @@ impl TvData {
         sonarr::remove_sonarr_data_and_files(self.id).await
     }
 
-    async fn get_data(tvdb_id: u32) -> Result<Self> {
-        let data = sonarr::get_sonarr_data(tvdb_id).await?;
+    async fn get_data(id: i32) -> Result<Self> {
+        let data = sonarr::get_sonarr_data(id).await?;
 
         let episodes_in_last_season = data
             .seasons

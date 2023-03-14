@@ -5,7 +5,6 @@ mod overseerr;
 mod plex;
 mod shared;
 mod tautulli;
-mod tmdb;
 mod utils;
 
 use color_eyre::{eyre::eyre, Report, Result};

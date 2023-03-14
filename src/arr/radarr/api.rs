@@ -6,9 +6,7 @@ use crate::{
     utils::{create_api_error_message, create_param_string},
 };
 
-use super::responses::Response;
-
-pub async fn get<T>(path: &str, params: Option<Vec<(&str, &str)>>) -> Result<Response<T>>
+pub async fn get<T>(path: &str, params: Option<Vec<(&str, &str)>>) -> Result<T>
 where
     T: DeserializeOwned,
 {
@@ -31,7 +29,7 @@ where
 
     if !(response.status().as_u16() >= 200 && response.status().as_u16() < 300) {
         let code = response.status().as_u16();
-        return Err(eyre!(create_api_error_message(code, "Radarr")));
+        return Err(eyre!(create_api_error_message(code, path, "Radarr")));
     }
 
     let response = response.json().await?;

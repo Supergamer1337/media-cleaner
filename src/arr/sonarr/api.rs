@@ -3,13 +3,12 @@ use std::fmt::Debug;
 use color_eyre::{eyre::eyre, Result};
 use serde::de::DeserializeOwned;
 
-use super::responses::Response;
 use crate::{
     config::Config,
     utils::{create_api_error_message, create_param_string},
 };
 
-pub async fn get<T>(path: &str, params: Option<Vec<(&str, &str)>>) -> Result<Response<T>>
+pub async fn get<T>(path: &str, params: Option<Vec<(&str, &str)>>) -> Result<T>
 where
     T: DeserializeOwned + Debug,
 {
@@ -32,7 +31,7 @@ where
 
     if !(response.status().as_u16() >= 200 && response.status().as_u16() < 300) {
         let code = response.status().as_u16();
-        return Err(eyre!(create_api_error_message(code, "Sonarr")));
+        return Err(eyre!(create_api_error_message(code, path, "Sonarr")));
     }
 
     let response = response.json().await?;

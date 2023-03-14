@@ -19,7 +19,7 @@ where
 
     if !(response.status().as_u16() >= 200 && response.status().as_u16() < 300) {
         let code = response.status().as_u16();
-        return Err(eyre!(create_api_error_message(code, "Overseerr")));
+        return Err(eyre!(create_api_error_message(code, path, "Overseerr")));
     }
 
     let mut response_data: RequestResponse<T> = response.json().await?;

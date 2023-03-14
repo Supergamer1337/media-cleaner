@@ -33,8 +33,7 @@ pub struct UserResponse {
 #[serde(rename_all = "camelCase")]
 pub struct MediaResponse {
     pub id: u32,
-    pub tmdb_id: Option<u32>,
-    pub tvdb_id: Option<u32>,
+    pub external_service_id: Option<i32>,
     pub rating_key: Option<String>,
     pub status: MediaStatus,
     pub media_type: MediaType,
