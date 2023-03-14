@@ -2,6 +2,7 @@ mod arr;
 mod config;
 mod media_item;
 mod overseerr;
+mod plex;
 mod shared;
 mod tautulli;
 mod tmdb;

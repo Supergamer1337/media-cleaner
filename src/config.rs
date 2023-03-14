@@ -6,11 +6,18 @@ use std::fs;
 #[derive(Debug, Deserialize)]
 pub struct Config {
     pub items_shown: usize,
+    pub plex: Plex,
     pub overseerr: Overseerr,
     pub tautulli: Tautulli,
     pub tmdb: TMDB,
     pub sonarr: Option<Sonarr>,
     pub radarr: Option<Radarr>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct Plex {
+    pub url: String,
+    pub token: String,
 }
 
 #[derive(Debug, Deserialize)]

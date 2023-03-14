@@ -7,9 +7,9 @@ use tokio::try_join;
 use crate::{
     arr::{self, ArrData},
     overseerr::{MediaRequest, MediaStatus},
+    plex::PlexData,
     shared::MediaType,
     tautulli::{self, WatchHistory},
-    tmdb::ItemMetadata,
 };
 
 #[derive(Debug)]
@@ -38,7 +38,7 @@ impl MediaItem {
 
         let (details, history, arr_data) = res;
         Ok(CompleteMediaItem {
-            title: details.name.clone(),
+            title: details.title.clone(),
             media_type: self.media_type,
             request: self.request,
             history,
@@ -73,17 +73,17 @@ impl MediaItem {
         tautulli::get_item_watches(rating_key, &self.media_type).await
     }
 
-    async fn retrieve_metadata(&self) -> Result<ItemMetadata> {
-        let tmdb_id = match self.request.tmdb_id {
-            Some(ref tmdb_id) => *tmdb_id,
+    async fn retrieve_metadata(&self) -> Result<PlexData> {
+        let rating_key = match self.rating_key {
+            Some(ref rating_key) => rating_key,
             None => {
                 return Err(eyre!(
-                    "No TMDB Id was found for item. Unable to gather metadata for item."
+                    "No rating key was found for request. Unable to gather metadata from Plex."
                 ))
             }
         };
 
-        ItemMetadata::get_data(self.media_type, tmdb_id).await
+        PlexData::get_data(rating_key, self.media_type).await
     }
 
     async fn retrieve_arr_data(&self) -> Result<ArrData> {
