@@ -1,21 +1,20 @@
 mod api;
 mod responses;
 
-use std::fmt::Display;
-
-pub use responses::MediaStatus;
-
 use chrono::prelude::*;
 use color_eyre::{owo_colors::OwoColorize, Result};
+use std::fmt::Display;
 
 use crate::{
     overseerr::responses::{MediaRequestResponse, RequestResponse},
     shared::MediaType,
 };
+pub use responses::MediaStatus;
 
 #[derive(Debug)]
 pub struct MediaRequest {
     pub id: u32,
+    pub media_id: u32,
     pub rating_key: Option<String>,
     pub manager_id: Option<i32>,
     pub created_at: DateTime<Utc>,
@@ -27,8 +26,9 @@ pub struct MediaRequest {
 
 impl MediaRequest {
     pub async fn remove_request(self) -> Result<()> {
-        let path = format!("/request/{}", self.id.to_string());
+        let path = format!("/media/{}", self.media_id);
         api::delete(&path).await?;
+
         Ok(())
     }
 
@@ -63,7 +63,8 @@ impl MediaRequest {
 
         Ok(MediaRequest {
             id: response.id,
-            rating_key: response.media.rating_key.clone(),
+            media_id: response.media.id,
+            rating_key: response.media.rating_key,
             manager_id: response.media.external_service_id,
             created_at: created_at.with_timezone(&Utc),
             updated_at: updated_at.with_timezone(&Utc),
