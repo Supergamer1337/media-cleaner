@@ -121,6 +121,8 @@ impl CompleteMediaItem {
 }
 
 pub async fn gather_requests_data() -> Result<(Vec<CompleteMediaItem>, Vec<Report>)> {
+    println!("Gathering all required data from your services.\nDepending on the amount of requests and your connection speed,this could take a while...");
+
     let requests = MediaRequest::get_all().await?;
 
     let futures = requests
