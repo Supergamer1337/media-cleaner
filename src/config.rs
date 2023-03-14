@@ -53,15 +53,37 @@ impl Config {
 
     pub fn read_conf() -> Result<()> {
         let reader = fs::File::open("config.yaml")?;
-        let conf: Config = serde_yaml::from_reader(reader)?;
+        let mut conf: Config = serde_yaml::from_reader(reader)?;
+
+        Self::remove_trailing_slashes(&mut conf);
 
         INSTANCE
             .set(conf)
             .expect("Config has already been initialized.");
         Ok(())
     }
+
+    fn remove_trailing_slashes(conf: &mut Config) {
+        remove_trailing_slash(&mut conf.overseerr.url);
+        remove_trailing_slash(&mut conf.plex.url);
+        remove_trailing_slash(&mut conf.tautulli.url);
+
+        if let Some(ref mut radarr) = conf.radarr {
+            remove_trailing_slash(&mut radarr.url);
+        }
+
+        if let Some(ref mut sonarr) = conf.sonarr {
+            remove_trailing_slash(&mut sonarr.url);
+        }
+    }
 }
 
 fn default_items_shown() -> usize {
     5
+}
+
+fn remove_trailing_slash(url: &mut String) {
+    if url.ends_with("/") {
+        url.pop();
+    }
 }
