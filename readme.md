@@ -12,6 +12,8 @@ Just download the latest release for your platform from the [releases page](http
 
 _Warning:_ As of right now, this program does not support Overseerr 4k instances, and only works in the cases where you use the normal Sonarr/Radarr instances.
 
+### Config
+
 Make sure you have a config file in the same directory as the executable (or more specifically the root of the working directory when you launch it). It should be named `config.yaml` and look something like this (this was chosen instead of CLI arguments to make it easier for repeated use):
 
 ```yaml
@@ -42,7 +44,18 @@ You can get your api keys from the respective applications. A simple search shou
 
 **ALSO MAKE SURE CSRF IS TURNED OFF IN OVERSEERR.**
 
-Once you have your config file, you can run the program with `./media-cleaner` (or `.\media-cleaner.exe` on Windows). If nothing is shown immediately, you have to wait for it to finish all the requests to gather the appropriate data. Afterwards it will bring up a list of all your requests, with the media data associated with that item (watch history, space, etc.), simply select the ones you want to remove (with space) and press enter. This will (after a confirmations screen) remove the request from Overseerr and tell Sonarr and Radarr to remove the show and its files.
+### Running the program
+
+Once you have your config file, you can run the program with `./media-cleaner` (or `.\media-cleaner.exe` on Windows). If nothing is shown immediately, you have to wait for it to finish all the requests to gather the appropriate data. Afterwards it will bring up a list of possible sorting options for your requests. After that it will instead show a list of all your requests, sorted in the way chosen, with the media data associated with that item (watch history, space, etc.), simply select the ones you want to remove (with space) and press enter. This will (after a confirmations screen) remove the request from Overseerr and tell Sonarr and Radarr to remove the show and its files.
+
+### Arguments
+
+You can also pass an argument to the program to skip the sorting screen and go straight to the requests screen. The argument is the sorting method you want to use, and can be one of the following:
+
+-   `-s`: Sort by size
+-   `sd`: Sort by size, in descending order
+-   `-n`: Sort by name
+-   `-nd`: Sort by name, in descending order
 
 ## Issues and PRs
 
