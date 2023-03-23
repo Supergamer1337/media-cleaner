@@ -1,3 +1,4 @@
+mod arguments;
 mod arr;
 mod config;
 mod media_item;
@@ -8,11 +9,15 @@ mod tautulli;
 mod utils;
 
 use color_eyre::{eyre::eyre, Report, Result};
+use futures::future;
+use itertools::Itertools;
+use overseerr::MediaRequest;
 use std::{io, process::Command};
 
+use arguments::Arguments;
 use config::Config;
 use dialoguer::MultiSelect;
-use media_item::{gather_requests_data, CompleteMediaItem};
+use media_item::{CompleteMediaItem, MediaItem};
 
 use crate::utils::human_file_size;
 
@@ -22,13 +27,15 @@ async fn main() -> Result<()> {
 
     read_and_validate_config()?;
 
-    let (mut requests, errs) = gather_requests_data().await?;
+    Arguments::read_args()?;
 
-    show_requests_result(&requests, errs)?;
+    let mut requests = gather_requests_data().await?;
+
+    show_requests_result(&requests)?;
 
     clear_screen()?;
 
-    let chosen = choose_items_to_delete(&requests)?;
+    let chosen = choose_items_to_delete(&mut requests)?;
 
     delete_chosen_items(&mut requests, &chosen).await?;
 
@@ -48,20 +55,42 @@ fn read_and_validate_config() -> Result<()> {
     Ok(())
 }
 
-fn show_requests_result(requests: &Vec<CompleteMediaItem>, errs: Vec<Report>) -> Result<()> {
-    show_potential_request_errors(errs)?;
+async fn gather_requests_data() -> Result<Vec<CompleteMediaItem>> {
+    println!("Gathering all required data from your services.\nDepending on the amount of requests and your connection speed, this could take a while...");
 
-    if requests.len() == 0 {
-        println!("You do not seem to have any valid requests, with data available.");
-        println!("Are you sure all your requests are available and downloaded? Or some data was unable to be acquired from other services.");
-        println!("Either try again later, or look over your requests.");
+    let requests = MediaRequest::get_all().await?;
 
-        println!();
-        wait(None)?;
-        std::process::exit(0);
-    }
+    let futures = requests
+        .into_iter()
+        .map(MediaItem::from_request)
+        .filter(|i| i.is_available() && i.has_manager_active())
+        .map(|item| {
+            tokio::spawn(async move {
+                let item = item.into_complete().await?;
 
-    Ok(())
+                Ok::<CompleteMediaItem, Report>(item)
+            })
+        });
+
+    let mut errors: Vec<Report> = Vec::new();
+
+    let complete_items = future::try_join_all(futures)
+        .await?
+        .into_iter()
+        .filter_map(|f| match f {
+            Ok(item) => Some(item),
+            Err(err) => {
+                errors.push(err);
+                None
+            }
+        })
+        .unique_by(|item| item.title.clone())
+        .sorted_by(|item1, item2| item1.title.cmp(&item2.title))
+        .collect();
+
+    show_potential_request_errors(errors)?;
+
+    Ok(complete_items)
 }
 
 fn show_potential_request_errors(errs: Vec<Report>) -> Result<()> {
@@ -98,7 +127,23 @@ fn show_potential_request_errors(errs: Vec<Report>) -> Result<()> {
     Ok(())
 }
 
-fn choose_items_to_delete(requests: &Vec<CompleteMediaItem>) -> Result<Vec<usize>> {
+fn show_requests_result(requests: &Vec<CompleteMediaItem>) -> Result<()> {
+    if requests.len() == 0 {
+        println!("You do not seem to have any valid requests, with data available.");
+        println!("Are you sure all your requests are available and downloaded? Or some data was unable to be acquired from other services.");
+        println!("Either try again later, or look over your requests.");
+
+        println!();
+        wait(None)?;
+        std::process::exit(0);
+    }
+
+    Ok(())
+}
+
+fn choose_items_to_delete(requests: &mut Vec<CompleteMediaItem>) -> Result<Vec<usize>> {
+    choose_sorting(requests)?;
+
     clear_screen()?;
 
     let items_to_show = Config::global().items_shown;
@@ -118,6 +163,73 @@ fn choose_items_to_delete(requests: &Vec<CompleteMediaItem>) -> Result<Vec<usize
     verify_chosen(requests, &chosen)?;
 
     Ok(chosen)
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum Order {
+    Desc,
+    Asc,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum SortingOption {
+    Name(Order),
+    Size(Order),
+}
+
+impl Default for SortingOption {
+    fn default() -> Self {
+        Self::Name(Order::Asc)
+    }
+}
+
+fn choose_sorting(requests: &mut Vec<CompleteMediaItem>) -> Result<()> {
+    clear_screen()?;
+
+    let args = Arguments::get_args();
+
+    let sort = match args.sorting {
+        Some(sort) => sort,
+        None => choose_sorting_dialogue()?,
+    };
+
+    match sort {
+        SortingOption::Name(Order::Desc) => return Ok(requests.reverse()),
+        SortingOption::Name(Order::Asc) => return Ok(()),
+        SortingOption::Size(Order::Asc) => {
+            return Ok(requests.sort_by_key(|req| req.get_disk_size()))
+        }
+        SortingOption::Size(Order::Desc) => {
+            return Ok(
+                requests.sort_by(|req1, req2| req2.get_disk_size().cmp(&req1.get_disk_size()))
+            )
+        }
+    }
+}
+
+fn choose_sorting_dialogue() -> Result<SortingOption> {
+    loop {
+        println!("Choose sorting method:");
+        println!("Name - Ascending: n (or just enter, it's the default)");
+        println!("Name - Descending: nd");
+        println!("Size - Descending: s");
+        println!("Size - Ascending: sa");
+
+        let input = get_user_input()?;
+
+        match input
+            .strip_suffix("\r\n")
+            .or(input.strip_suffix("\n"))
+            .unwrap_or(&input)
+        {
+            "nd" => return Ok(SortingOption::Name(Order::Desc)),
+            "n" => return Ok(SortingOption::Name(Order::Asc)),
+            "sa" => return Ok(SortingOption::Size(Order::Asc)),
+            "s" => return Ok(SortingOption::Size(Order::Desc)),
+            "" => return Ok(SortingOption::default()),
+            _ => (),
+        };
+    }
 }
 
 fn verify_chosen(requests: &Vec<CompleteMediaItem>, chosen: &Vec<usize>) -> Result<()> {

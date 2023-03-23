@@ -1,6 +1,4 @@
-use color_eyre::{eyre::eyre, owo_colors::OwoColorize, Report, Result};
-use futures::future::{self};
-use itertools::Itertools;
+use color_eyre::{eyre::eyre, owo_colors::OwoColorize, Result};
 use std::fmt::{Debug, Display};
 use tokio::try_join;
 
@@ -118,42 +116,6 @@ impl CompleteMediaItem {
     pub fn get_disk_size(&self) -> i64 {
         self.arr_data.get_disk_size()
     }
-}
-
-pub async fn gather_requests_data() -> Result<(Vec<CompleteMediaItem>, Vec<Report>)> {
-    println!("Gathering all required data from your services.\nDepending on the amount of requests and your connection speed,this could take a while...");
-
-    let requests = MediaRequest::get_all().await?;
-
-    let futures = requests
-        .into_iter()
-        .map(MediaItem::from_request)
-        .filter(|i| i.is_available() && i.has_manager_active())
-        .map(|item| {
-            tokio::spawn(async move {
-                let item = item.into_complete().await?;
-
-                Ok::<CompleteMediaItem, Report>(item)
-            })
-        });
-
-    let mut errors: Vec<Report> = Vec::new();
-
-    let complete_items = future::try_join_all(futures)
-        .await?
-        .into_iter()
-        .filter_map(|f| match f {
-            Ok(item) => Some(item),
-            Err(err) => {
-                errors.push(err);
-                None
-            }
-        })
-        .unique_by(|item| item.title.clone())
-        .sorted_by(|item1, item2| item1.title.cmp(&item2.title))
-        .collect();
-
-    Ok((complete_items, errors))
 }
 
 impl Display for CompleteMediaItem {

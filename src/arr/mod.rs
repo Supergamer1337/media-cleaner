@@ -171,7 +171,7 @@ impl Display for TvData {
                 0 => "unknown".to_string(),
                 count => count.to_string()
             }.yellow(),
-            &format!("{}%", self.percent_of_episodes_on_disk).blue(),
+            &format!("{:.2}%", self.percent_of_episodes_on_disk).blue(),
         )
     }
 }

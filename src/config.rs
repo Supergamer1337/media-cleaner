@@ -3,6 +3,7 @@ use once_cell::sync::OnceCell;
 use serde::Deserialize;
 use std::fs;
 
+static INSTANCE: OnceCell<Config> = OnceCell::new();
 #[derive(Debug, Deserialize)]
 pub struct Config {
     #[serde(default = "default_items_shown")]
@@ -44,14 +45,16 @@ pub struct Radarr {
     pub url: String,
 }
 
-static INSTANCE: OnceCell<Config> = OnceCell::new();
-
 impl Config {
     pub fn global() -> &'static Config {
         INSTANCE.get().expect("Config has not been initialized.")
     }
 
     pub fn read_conf() -> Result<()> {
+        if let Some(_) = INSTANCE.get() {
+            return Ok(());
+        }
+
         let reader = fs::File::open("config.yaml")?;
         let mut conf: Config = serde_yaml::from_reader(reader)?;
 
