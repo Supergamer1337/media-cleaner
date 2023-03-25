@@ -3,7 +3,7 @@ use itertools::Itertools;
 use once_cell::sync::OnceCell;
 use std::env;
 
-use crate::{Order, SortingOption};
+use crate::SortingOption;
 
 static INSTANCE: OnceCell<Arguments> = OnceCell::new();
 
@@ -35,25 +35,9 @@ impl Arguments {
     }
 
     fn read_sort(args: &mut Vec<String>) -> Option<SortingOption> {
-        for (i, arg) in args.iter_mut().enumerate() {
-            match arg.as_str() {
-                "-n" => {
-                    args.swap_remove(i);
-                    return Some(SortingOption::Name(Order::Asc));
-                }
-                "-nd" => {
-                    args.swap_remove(i);
-                    return Some(SortingOption::Name(Order::Desc));
-                }
-                "-s" => {
-                    args.swap_remove(i);
-                    return Some(SortingOption::Size(Order::Desc));
-                }
-                "-sa" => {
-                    args.swap_remove(i);
-                    return Some(SortingOption::Size(Order::Asc));
-                }
-                _ => continue,
+        for arg in args.iter_mut() {
+            if let Ok(sort) = SortingOption::from_str(&arg[1..]) {
+                return Some(sort);
             }
         }
 

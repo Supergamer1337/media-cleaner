@@ -56,6 +56,7 @@ You can also pass an argument to the program to skip the sorting screen and go s
 -   `sd`: Sort by size, in descending order
 -   `-n`: Sort by name
 -   `-nd`: Sort by name, in descending order
+-   `-t`: Sort by media type
 
 ## Issues and PRs
 

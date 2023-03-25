@@ -12,6 +12,7 @@ use color_eyre::{eyre::eyre, Report, Result};
 use futures::future;
 use itertools::Itertools;
 use overseerr::MediaRequest;
+use shared::{Order, SortingOption, SortingValue};
 use std::{io, process::Command};
 
 use arguments::Arguments;
@@ -165,46 +166,28 @@ fn choose_items_to_delete(requests: &mut Vec<CompleteMediaItem>) -> Result<Vec<u
     Ok(chosen)
 }
 
-#[derive(Debug, Clone, Copy)]
-pub enum Order {
-    Desc,
-    Asc,
-}
-
-#[derive(Debug, Clone, Copy)]
-pub enum SortingOption {
-    Name(Order),
-    Size(Order),
-}
-
-impl Default for SortingOption {
-    fn default() -> Self {
-        Self::Name(Order::Asc)
-    }
-}
-
 fn choose_sorting(requests: &mut Vec<CompleteMediaItem>) -> Result<()> {
     clear_screen()?;
 
     let args = Arguments::get_args();
 
     let sort = match args.sorting {
-        Some(sort) => sort,
+        Some(ref sort) => sort.clone(),
         None => choose_sorting_dialogue()?,
     };
 
-    match sort {
-        SortingOption::Name(Order::Desc) => return Ok(requests.reverse()),
-        SortingOption::Name(Order::Asc) => return Ok(()),
-        SortingOption::Size(Order::Asc) => {
-            return Ok(requests.sort_by_key(|req| req.get_disk_size()))
-        }
-        SortingOption::Size(Order::Desc) => {
-            return Ok(
-                requests.sort_by(|req1, req2| req2.get_disk_size().cmp(&req1.get_disk_size()))
-            )
-        }
-    }
+    match sort.sorting_value {
+        SortingValue::Name => (),
+        SortingValue::Size => requests.sort_by_key(|req| req.get_disk_size()),
+        SortingValue::Type => requests.sort_by_key(|req| req.media_type),
+    };
+
+    match sort.sorting_direction {
+        Order::Asc => (),
+        Order::Desc => requests.reverse(),
+    };
+
+    Ok(())
 }
 
 fn choose_sorting_dialogue() -> Result<SortingOption> {
@@ -214,21 +197,16 @@ fn choose_sorting_dialogue() -> Result<SortingOption> {
         println!("Name - Descending: nd");
         println!("Size - Descending: s");
         println!("Size - Ascending: sa");
+        println!("Type - Descending: t");
 
         let input = get_user_input()?;
 
-        match input
-            .strip_suffix("\r\n")
-            .or(input.strip_suffix("\n"))
-            .unwrap_or(&input)
-        {
-            "nd" => return Ok(SortingOption::Name(Order::Desc)),
-            "n" => return Ok(SortingOption::Name(Order::Asc)),
-            "sa" => return Ok(SortingOption::Size(Order::Asc)),
-            "s" => return Ok(SortingOption::Size(Order::Desc)),
-            "" => return Ok(SortingOption::default()),
-            _ => (),
-        };
+        if let Ok(sort) = SortingOption::from_str(&input) {
+            return Ok(sort);
+        }
+        if input.eq("") {
+            return Ok(SortingOption::default());
+        }
     }
 }
 
@@ -315,8 +293,13 @@ fn get_user_input() -> Result<String> {
     let stdin = io::stdin();
 
     stdin.read_line(&mut user_input)?;
+    user_input = user_input.to_lowercase();
 
-    Ok(user_input.to_lowercase())
+    Ok(user_input
+        .strip_suffix("\r\n")
+        .or(user_input.strip_suffix("\n"))
+        .unwrap_or(&user_input)
+        .to_string())
 }
 
 fn wait(custom_msg: Option<&str>) -> Result<()> {
