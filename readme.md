@@ -53,7 +53,7 @@ Once you have your config file, you can run the program with `./media-cleaner` (
 You can also pass an argument to the program to skip the sorting screen and go straight to the requests screen. The argument is the sorting method you want to use, and can be one of the following:
 
 -   `-s`: Sort by size
--   `sd`: Sort by size, in descending order
+-   `-sa`: Sort by size, in ascending order
 -   `-n`: Sort by name
 -   `-nd`: Sort by name, in descending order
 -   `-t`: Sort by media type
