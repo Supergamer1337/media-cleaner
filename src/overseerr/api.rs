@@ -2,17 +2,24 @@ use color_eyre::{eyre::eyre, Result};
 use serde::de::DeserializeOwned;
 
 use super::responses::RequestResponse;
-use crate::{config::Config, utils::create_api_error_message};
+use crate::{
+    config::Config,
+    utils::{create_api_error_message, create_param_string},
+};
 
-pub async fn get<T>(path: &str) -> Result<RequestResponse<T>>
+pub async fn get<T>(path: &str, params: Option<Vec<(&str, &str)>>) -> Result<RequestResponse<T>>
 where
     T: DeserializeOwned,
 {
     let client = reqwest::Client::new();
     let config = &Config::global().overseerr;
-
     let response = client
-        .get(format!("{}/api/v1{}?take=100", &config.url, path))
+        .get(format!(
+            "{}/api/v1{}?take=100&{}",
+            &config.url,
+            path,
+            &create_param_string(params)
+        ))
         .header("X-API-Key", &config.api_key)
         .send()
         .await?;

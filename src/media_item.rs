@@ -4,7 +4,7 @@ use tokio::try_join;
 
 use crate::{
     arr::{self, ArrData},
-    overseerr::{MediaRequest, MediaStatus},
+    overseerr::{MediaRequest, MediaStatus, ServerItem},
     plex::PlexData,
     shared::MediaType,
     tautulli::{self, WatchHistory},
@@ -16,7 +16,8 @@ pub struct MediaItem {
     rating_key: Option<String>,
     manager_id: Option<i32>,
     pub media_type: MediaType,
-    request: MediaRequest,
+    media_status: MediaStatus,
+    request: Option<MediaRequest>,
 }
 
 impl MediaItem {
@@ -26,14 +27,27 @@ impl MediaItem {
             rating_key: request.rating_key.clone(),
             manager_id: request.manager_id,
             media_type: request.media_type,
-            request: request,
+            media_status: request.media_status,
+            request: Some(request),
         }
     }
 
-    pub async fn into_complete(self) -> Result<CompleteMediaItem> {
+    pub fn from_server_item(item: ServerItem) -> Self {
+        Self {
+            title: None,
+            rating_key: Some(item.rating_key),
+            manager_id: item.manager_id,
+            media_type: item.media_type,
+            media_status: item.media_status,
+            request: None,
+        }
+    }
+
+    pub async fn into_complete_media(self) -> Result<CompleteMediaItem> {
         let metadata = self.retrieve_metadata();
         let history = self.retrieve_history();
         let data = self.retrieve_arr_data();
+
         let res = try_join!(metadata, history, data)?;
 
         let (details, history, arr_data) = res;
@@ -47,14 +61,14 @@ impl MediaItem {
     }
 
     pub fn is_available(&self) -> bool {
-        match &self.request.media_status {
+        match &self.media_status {
             MediaStatus::Available | MediaStatus::PartiallyAvailable => true,
             _ => false,
         }
     }
 
     pub fn has_manager_active(&self) -> bool {
-        match &self.request.media_type {
+        match &self.media_type {
             MediaType::Movie => arr::movie_manger_active(),
             MediaType::Tv => arr::tv_manager_active(),
         }
@@ -101,14 +115,16 @@ impl MediaItem {
 pub struct CompleteMediaItem {
     pub title: String,
     pub media_type: MediaType,
-    request: MediaRequest,
+    request: Option<MediaRequest>,
     history: WatchHistory,
     arr_data: ArrData,
 }
 
 impl CompleteMediaItem {
     pub async fn remove_from_server(self) -> Result<()> {
-        self.request.remove_request().await?;
+        if let Some(request) = self.request {
+            request.remove_request().await?;
+        }
         self.arr_data.remove_data().await?;
         Ok(())
     }
@@ -126,7 +142,9 @@ impl Display for CompleteMediaItem {
             self.media_type.to_string().blue(),
             self.title.green()
         )?;
-        write!(f, " {}", self.request)?;
+        if let Some(ref request) = self.request {
+            write!(f, " {}", request)?;
+        }
 
         write!(f, "\n      {}", self.arr_data)?;
 

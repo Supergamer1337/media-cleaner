@@ -37,6 +37,8 @@ pub struct MediaResponse {
     pub rating_key: Option<String>,
     pub status: MediaStatus,
     pub media_type: MediaType,
+    pub created_at: String,
+    pub updated_at: Option<String>,
 }
 
 #[derive(Debug, Deserialize_repr, Clone, Copy)]

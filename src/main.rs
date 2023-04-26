@@ -20,7 +20,7 @@ use config::Config;
 use dialoguer::MultiSelect;
 use media_item::{CompleteMediaItem, MediaItem};
 
-use crate::utils::human_file_size;
+use crate::{overseerr::ServerItem, utils::human_file_size};
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -30,15 +30,15 @@ async fn main() -> Result<()> {
 
     Arguments::read_args()?;
 
-    let mut requests = gather_requests_data().await?;
+    let mut deletion_items = get_deletion_items().await?;
 
-    show_requests_result(&requests)?;
+    show_requests_result(&deletion_items)?;
 
     clear_screen()?;
 
-    let chosen = choose_items_to_delete(&mut requests)?;
+    let chosen = choose_items_to_delete(&mut deletion_items)?;
 
-    delete_chosen_items(&mut requests, &chosen).await?;
+    delete_chosen_items(&mut deletion_items, &chosen).await?;
 
     Ok(())
 }
@@ -56,18 +56,32 @@ fn read_and_validate_config() -> Result<()> {
     Ok(())
 }
 
-async fn gather_requests_data() -> Result<Vec<CompleteMediaItem>> {
-    println!("Gathering all required data from your services.\nDepending on the amount of requests and your connection speed, this could take a while...");
+async fn get_deletion_items() -> Result<Vec<CompleteMediaItem>> {
+    println!("Gathering all required data from your services.\nDepending on the amount of data and your connection speed, this could take a while...");
 
-    let requests = MediaRequest::get_all().await?;
+    let all_items = Arguments::get_args().all_media;
 
-    let futures = requests
+    let media_items: Vec<MediaItem>;
+    if all_items {
+        media_items = ServerItem::get_all()
+            .await?
+            .into_iter()
+            .map(MediaItem::from_server_item)
+            .collect();
+    } else {
+        media_items = MediaRequest::get_all()
+            .await?
+            .into_iter()
+            .map(MediaItem::from_request)
+            .collect();
+    }
+
+    let futures = media_items
         .into_iter()
-        .map(MediaItem::from_request)
         .filter(|i| i.is_available() && i.has_manager_active())
         .map(|item| {
             tokio::spawn(async move {
-                let item = item.into_complete().await?;
+                let item = item.into_complete_media().await?;
 
                 Ok::<CompleteMediaItem, Report>(item)
             })
@@ -112,7 +126,7 @@ fn show_potential_request_errors(errs: Vec<Report>) -> Result<()> {
 
     println!("Do you want to see the full stack traces? Press y. Otherwise continuing to deletion screen with errored items ignored.");
     let inp = get_user_input()?;
-    if inp.starts_with("y") {
+    if !inp.starts_with("y") {
         return Ok(());
     }
 
