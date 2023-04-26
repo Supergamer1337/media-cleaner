@@ -13,11 +13,11 @@ use crate::{
 #[derive(Debug)]
 pub struct MediaItem {
     pub title: Option<String>,
-    rating_key: Option<String>,
+    pub rating_key: Option<String>,
     manager_id: Option<i32>,
     pub media_type: MediaType,
     media_status: MediaStatus,
-    request: Option<MediaRequest>,
+    pub request: Option<MediaRequest>,
 }
 
 impl MediaItem {

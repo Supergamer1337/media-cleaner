@@ -61,19 +61,31 @@ async fn get_deletion_items() -> Result<Vec<CompleteMediaItem>> {
 
     let all_items = Arguments::get_args().all_media;
 
-    let media_items: Vec<MediaItem>;
+    let mut media_items = MediaRequest::get_all()
+        .await?
+        .into_iter()
+        .map(MediaItem::from_request)
+        .collect_vec();
+
+    // This is done by merging the two lists, because Overseerr does not send who requested the media along
+    // when getting all of the media on the server. Neither does Overseerr have an endpoint for getting all
+    // requests associated with an item.
+    //
+    // If that was allowed, this could be made much nicer and more performance friendly.
     if all_items {
-        media_items = ServerItem::get_all()
+        let mut not_requested_media_items = ServerItem::get_all()
             .await?
             .into_iter()
             .map(MediaItem::from_server_item)
-            .collect();
-    } else {
-        media_items = MediaRequest::get_all()
-            .await?
-            .into_iter()
-            .map(MediaItem::from_request)
-            .collect();
+            .collect_vec();
+
+        media_items.append(&mut not_requested_media_items);
+
+        media_items.sort_by(|item1, item2| {
+            (&item1.rating_key, item1.request.is_some())
+                .cmp(&(&item2.rating_key, item2.request.is_some()))
+        });
+        media_items.dedup_by(|item1, item2| item1.rating_key == item2.rating_key);
     }
 
     let futures = media_items
