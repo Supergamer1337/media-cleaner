@@ -50,6 +50,13 @@ Once you have your config file, you can run the program with `./media-cleaner` (
 
 ### Arguments
 
+Arguments are used to either:
+
+1. Speed up the process by skipping certain screens.
+2. Change the behavior of the program.
+
+#### Sorting
+
 You can also pass an argument to the program to skip the sorting screen and go straight to the requests screen. The argument is the sorting method you want to use, and can be one of the following:
 
 -   `-s`: Sort by size
@@ -57,6 +64,10 @@ You can also pass an argument to the program to skip the sorting screen and go s
 -   `-n`: Sort by name
 -   `-nd`: Sort by name, in descending order
 -   `-t`: Sort by media type
+
+#### Getting a list of all media
+
+By passing in the flag `-C`, the program will instead show a list of all media in your library, with the same information as the requests screen. This is useful if you want to see what media you have in your library, and what you can remove. Even though that item does not have a request associated with it. Otherwise it works the same as the "normal" requests screen.
 
 ## Issues and PRs
 
