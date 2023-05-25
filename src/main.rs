@@ -82,8 +82,8 @@ async fn get_deletion_items() -> Result<Vec<CompleteMediaItem>> {
         media_items.append(&mut not_requested_media_items);
 
         media_items.sort_by(|item1, item2| {
-            (&item1.rating_key, item1.request.is_some())
-                .cmp(&(&item2.rating_key, item2.request.is_some()))
+            (&item1.rating_key, !item1.request.is_some())
+                .cmp(&(&item2.rating_key, !item2.request.is_some()))
         });
         media_items.dedup_by(|item1, item2| item1.rating_key == item2.rating_key);
     }
