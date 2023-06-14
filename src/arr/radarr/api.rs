@@ -1,23 +1,37 @@
 use color_eyre::{eyre::eyre, Result};
 use serde::de::DeserializeOwned;
+use serde_json::from_str;
 
 use crate::{
-    config::Config,
+    config::{Config, Radarr},
     utils::{create_api_error_message, create_param_string},
 };
 
-pub async fn get<T>(path: &str, params: Option<Vec<(&str, &str)>>) -> Result<T>
+pub async fn get<T>(path: &str, params: Option<Vec<(&str, &str)>>, is_4k: bool) -> Result<T>
 where
     T: DeserializeOwned,
 {
-    let config = match &Config::global().radarr {
-        Some(ref radarr) => radarr,
-        None => {
-            return Err(eyre!(
-                "Tried to access radarr config, even though it is not defined."
-            ))
+    let config: &Radarr;
+    if is_4k {
+        config = match &Config::global().radarr_4k {
+            Some(ref radarr) => radarr,
+            None => {
+                return Err(eyre!(
+                    "Tried to access radarr config, even though it is not defined."
+                ))
+            }
         }
-    };
+    } else {
+        config = match &Config::global().radarr {
+            Some(ref radarr) => radarr,
+            None => {
+                return Err(eyre!(
+                    "Tried to access radarr config, even though it is not defined."
+                ))
+            }
+        };
+    }
+
     let client = reqwest::Client::new();
     let params = create_param_string(params);
 

@@ -10,8 +10,6 @@ Just download the latest release for your platform from the [releases page](http
 
 ## Usage
 
-_Warning:_ As of right now, this program does not support Overseerr 4k instances, and only works in the cases where you use the normal Sonarr/Radarr instances.
-
 ### Config
 
 Make sure you have a config file in the same directory as the executable (or more specifically the root of the working directory when you launch it). It should be named `config.yaml` and look something like this (this was chosen instead of CLI arguments to make it easier for repeated use):
@@ -33,8 +31,14 @@ tautulli:
 sonarr: # If you don't use Sonarr, just leave this section out
     url: https://YOUR_SONARR_URL
     api_key: YOUR_API_KEY
+sonarr_4k: # If you don't have a 4k Sonarr instance, just leave this section out
+    url: https://YOUR_SONARR_4K_URL
+    api_key: YOUR_API_KEY
 radarr: # If you don't use Radarr, just leave this section out
     url: https://YOUR_RADARR_URL
+    api_key: YOUR_API_KEY
+radarr_4k: # If you don't have a 4k Radarr instance, just leave this section out
+    url: https://YOUR_RADARR_4K_URL
     api_key: YOUR_API_KEY
 ```
 

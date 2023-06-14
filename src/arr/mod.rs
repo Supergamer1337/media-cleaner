@@ -11,7 +11,6 @@ pub use self::radarr::MovieStatus;
 pub use self::sonarr::SeriesStatus;
 use crate::config::Config;
 use crate::shared::MediaType;
-use crate::utils::human_file_size;
 
 pub fn movie_manger_active() -> bool {
     match Config::global().radarr {
@@ -20,8 +19,22 @@ pub fn movie_manger_active() -> bool {
     }
 }
 
+pub fn movie_4k_manager_active() -> bool {
+    match Config::global().radarr_4k {
+        Some(_) => true,
+        None => false,
+    }
+}
+
 pub fn tv_manager_active() -> bool {
     match Config::global().sonarr {
+        Some(_) => true,
+        None => false,
+    }
+}
+
+pub fn tv_4k_manager_active() -> bool {
+    match Config::global().sonarr_4k {
         Some(_) => true,
         None => false,
     }
@@ -36,8 +49,15 @@ pub enum ArrData {
 impl ArrData {
     pub async fn get_data(media_type: MediaType, id: i32) -> Result<Self> {
         match media_type {
-            MediaType::Movie => Ok(Self::Movie(MovieData::get_data(id).await?)),
-            MediaType::Tv => Ok(Self::Tv(TvData::get_data(id).await?)),
+            MediaType::Movie => Ok(Self::Movie(MovieData::get_data(id, false).await?)),
+            MediaType::Tv => Ok(Self::Tv(TvData::get_data(id, false).await?)),
+        }
+    }
+
+    pub async fn get_4k_data(media_type: MediaType, id: i32) -> Result<Self> {
+        match media_type {
+            MediaType::Movie => Ok(Self::Movie(MovieData::get_data(id, true).await?)),
+            MediaType::Tv => Ok(Self::Tv(TvData::get_data(id, true).await?)),
         }
     }
 
@@ -75,8 +95,8 @@ pub struct MovieData {
 }
 
 impl MovieData {
-    async fn get_data(id: i32) -> Result<Self> {
-        let data = radarr::get_radarr_data(id).await?;
+    async fn get_data(id: i32, is_4k: bool) -> Result<Self> {
+        let data = radarr::get_radarr_data(id, is_4k).await?;
 
         Ok(Self {
             id: data.id,
@@ -98,15 +118,12 @@ impl Display for MovieData {
 
         let physical_release = format_potential_date(self.physical_release);
 
-        let size: String = human_file_size(self.size_on_disk);
-
         write!(
             f,
-            "It was released {} digitally and {} physically. Current status is {:?}, and size is {}",
+            "It was released {} digitally and {} physically. Current status is {:?}.",
             digital_release.blue(),
             physical_release.blue(),
             self.status.green(),
-            size.red()
         )
     }
 }
@@ -128,8 +145,8 @@ impl TvData {
         sonarr::remove_sonarr_data_and_files(self.id).await
     }
 
-    async fn get_data(id: i32) -> Result<Self> {
-        let data = sonarr::get_sonarr_data(id).await?;
+    async fn get_data(id: i32, is_4k: bool) -> Result<Self> {
+        let data = sonarr::get_sonarr_data(id, is_4k).await?;
 
         let episodes_in_last_season = data
             .seasons
@@ -155,17 +172,15 @@ impl TvData {
 
 impl Display for TvData {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let size: String = human_file_size(self.size_on_disk);
         let last_aired = format_potential_date(self.last_airing);
         let next_airing = format_potential_date(self.next_airing);
 
         write!(
             f,
-            "Last airing was {} and the next {}. Current status is {:?}, and size is {}. It has {} seasons, and {} episodes in the last season, with {} of episodes downloaded.",
+            "Last airing was {} and the next {}. Current status is {:?}. It has {} seasons, and {} episodes in the last season, with {} of episodes downloaded.",
             last_aired.blue(),
             next_airing.blue(),
             self.status.green(),
-            size.red(),
             self.season_count.yellow(),
             match self.episodes_in_last_season {
                 0 => "unknown".to_string(),

@@ -34,6 +34,7 @@ pub struct UserResponse {
 pub struct MediaResponse {
     pub id: u32,
     pub external_service_id: Option<i32>,
+    pub external_service_id_4k: Option<i32>,
     pub rating_key: Option<String>,
     pub status: MediaStatus,
     pub media_type: MediaType,

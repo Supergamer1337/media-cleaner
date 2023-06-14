@@ -6,9 +6,9 @@ use color_eyre::Result;
 use self::responses::SeriesResource;
 pub use self::responses::SeriesStatus;
 
-pub async fn get_sonarr_data(id: i32) -> Result<SeriesResource> {
+pub async fn get_sonarr_data(id: i32, is_4k: bool) -> Result<SeriesResource> {
     let path = format!("/series/{}", id.to_string());
-    api::get(&path, None).await
+    api::get(&path, None, is_4k).await
 }
 
 pub async fn remove_sonarr_data_and_files(sonarr_id: i32) -> Result<()> {

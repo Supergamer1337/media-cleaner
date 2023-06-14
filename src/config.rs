@@ -12,7 +12,9 @@ pub struct Config {
     pub overseerr: Overseerr,
     pub tautulli: Tautulli,
     pub sonarr: Option<Sonarr>,
+    pub sonarr_4k: Option<Sonarr>,
     pub radarr: Option<Radarr>,
+    pub radarr_4k: Option<Radarr>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -58,7 +60,7 @@ impl Config {
         let reader = fs::File::open("config.yaml")?;
         let mut conf: Config = serde_yaml::from_reader(reader)?;
 
-        Self::remove_trailing_slashes(&mut conf);
+        Self::clean_urls(&mut conf);
 
         INSTANCE
             .set(conf)
@@ -66,17 +68,25 @@ impl Config {
         Ok(())
     }
 
-    fn remove_trailing_slashes(conf: &mut Config) {
-        remove_trailing_slash(&mut conf.overseerr.url);
-        remove_trailing_slash(&mut conf.plex.url);
-        remove_trailing_slash(&mut conf.tautulli.url);
+    fn clean_urls(conf: &mut Config) {
+        clean_url(&mut conf.overseerr.url);
+        clean_url(&mut conf.plex.url);
+        clean_url(&mut conf.tautulli.url);
 
         if let Some(ref mut radarr) = conf.radarr {
-            remove_trailing_slash(&mut radarr.url);
+            clean_url(&mut radarr.url);
+        }
+
+        if let Some(ref mut radarr) = conf.radarr_4k {
+            clean_url(&mut radarr.url);
         }
 
         if let Some(ref mut sonarr) = conf.sonarr {
-            remove_trailing_slash(&mut sonarr.url);
+            clean_url(&mut sonarr.url);
+        }
+
+        if let Some(ref mut sonarr) = conf.sonarr_4k {
+            clean_url(&mut sonarr.url);
         }
     }
 }
@@ -85,7 +95,7 @@ fn default_items_shown() -> usize {
     5
 }
 
-fn remove_trailing_slash(url: &mut String) {
+fn clean_url(url: &mut String) {
     if url.ends_with("/") {
         url.pop();
     }
