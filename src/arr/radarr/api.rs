@@ -1,6 +1,5 @@
 use color_eyre::{eyre::eyre, Result};
 use serde::de::DeserializeOwned;
-use serde_json::from_str;
 
 use crate::{
     config::{Config, Radarr},
