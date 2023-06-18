@@ -4,6 +4,7 @@ use tokio::try_join;
 
 use crate::{
     arr::{self, ArrData},
+    config::Config,
     overseerr::{MediaRequest, MediaStatus, ServerItem},
     plex::PlexData,
     shared::MediaType,
@@ -75,6 +76,27 @@ impl MediaItem {
         match &self.media_type {
             MediaType::Movie => arr::movie_manger_active() || arr::movie_4k_manager_active(),
             MediaType::Tv => arr::tv_manager_active() || arr::tv_4k_manager_active(),
+        }
+    }
+
+    pub fn user_ignored(&self) -> bool {
+        let request = match self.request {
+            None => return false,
+            Some(ref request) => request,
+        };
+
+        let ignored_users = match Config::global().ignored_users {
+            None => return false,
+            Some(ref users) => users,
+        };
+
+        if ignored_users.contains(&request.requested_by)
+        // .iter()
+        // .any(|user| user.eq(&request.requested_by))
+        {
+            true
+        } else {
+            false
         }
     }
 

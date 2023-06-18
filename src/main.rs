@@ -90,7 +90,7 @@ async fn get_deletion_items() -> Result<Vec<CompleteMediaItem>> {
 
     let futures = media_items
         .into_iter()
-        .filter(|i| i.is_available() && i.has_manager_active())
+        .filter(|i| i.is_available() && i.has_manager_active() && !i.user_ignored())
         .map(|item| {
             tokio::spawn(async move {
                 let item = item.into_complete_media().await?;

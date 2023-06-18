@@ -15,6 +15,7 @@ pub struct Config {
     pub sonarr_4k: Option<Sonarr>,
     pub radarr: Option<Radarr>,
     pub radarr_4k: Option<Radarr>,
+    pub ignored_users: Option<Vec<String>>,
 }
 
 #[derive(Debug, Deserialize)]

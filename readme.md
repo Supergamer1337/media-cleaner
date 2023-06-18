@@ -48,6 +48,18 @@ You can get your api keys from the respective applications. A simple search shou
 
 **ALSO MAKE SURE CSRF IS TURNED OFF IN OVERSEERR.**
 
+#### Ignoring users
+
+If you want to ignore a user (or multiple) simply add them to the `ignored_users` list in the config file. This is useful if you have a user that you don't want to remove media for, for example yourself. The user is matched by their Overseerr username, so make sure you use the same username in both places.
+
+Example:
+
+```yaml
+ignored_users:
+    - MyUser
+    - SomeOtherUser
+```
+
 ### Running the program
 
 Once you have your config file, you can run the program with `./media-cleaner` (or `.\media-cleaner.exe` on Windows). If nothing is shown immediately, you have to wait for it to finish all the requests to gather the appropriate data. Afterwards it will bring up a list of possible sorting options for your requests. After that it will instead show a list of all your requests, sorted in the way chosen, with the media data associated with that item (watch history, space, etc.), simply select the ones you want to remove (with space) and press enter. This will (after a confirmations screen) remove the request from Overseerr and tell Sonarr and Radarr to remove the show and its files.
