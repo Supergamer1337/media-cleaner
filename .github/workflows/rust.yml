@@ -14,7 +14,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Build-musl
-      uses: shogan/rust-musl-action@master
+      uses: gmiam/rust-musl-action@master
       with:
         args: cargo build --target $BUILD_TARGET --release
     - uses: actions/upload-artifact@v2
