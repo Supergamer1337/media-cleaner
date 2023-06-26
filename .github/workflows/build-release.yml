@@ -30,12 +30,12 @@ jobs:
           cd target/x86_64-unknown-linux-musl/release
           strip ${{ env.BINARY_NAME }}
           chmod +x ${{ env.BINARY_NAME }}
-          tar -c ${{ env.BINARY_NAME }} | gzip > ${{ env.BINARY_NAME }}-${{ github.event.release.tag-name }}-linux-x86_64.tar.gz
+          tar -c ${{ env.BINARY_NAME }} | gzip > ${{ env.BINARY_NAME }}-${{ github.ref_name }}-linux-x86_64.tar.gz
 
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
-          files: target/x86_64-unknown-linux-musl/release/${{ env.BINARY_NAME }}-${{ github.event.release.tag-name }}-linux-x86_64.tar.gz
+          files: target/x86_64-unknown-linux-musl/release/${{ env.BINARY_NAME }}-${{ github.ref_name }}-linux-x86_64.tar.gz
 
   windows-x86_64:
     runs-on: windows-latest
@@ -55,9 +55,9 @@ jobs:
           args: --release
           use-cross: true
           
-      - run: Compress-Archive -Path target/release/* -Destination ${{ env.BINARY_NAME }}-${{ github.event.release.tag-name }}-windows-x86_64.zip
+      - run: Compress-Archive -Path target/release/* -Destination ${{ env.BINARY_NAME }}-${{ github.ref_name }}-windows-x86_64.zip
       
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
-          files: target/release/${{ env.BINARY_NAME }}-${{ github.event.release.tag-name }}-windows-x86_64.zip
+          files: ${{ env.BINARY_NAME }}-${{ github.ref_name }}-windows-x86_64.zip
