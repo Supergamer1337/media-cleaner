@@ -30,12 +30,12 @@ jobs:
           cd target/x86_64-unknown-linux-musl/release
           strip ${{ env.BINARY_NAME }}
           chmod +x ${{ env.BINARY_NAME }}
-          tar -c ${{ env.BINARY_NAME }} | gzip > ${{ env.BINARY_NAME }}.tar.gz
+          tar -c ${{ env.BINARY_NAME }} | gzip > ${{ env.BINARY_NAME }}-${{ github.event.release.tag-name }}-linux-x86_64.tar.gz
 
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
-          files: target/x86_64-unknown-linux-musl/release/${{ env.BINARY_NAME }}.tar.gz
+          files: target/x86_64-unknown-linux-musl/release/${{ env.BINARY_NAME }}-${{ github.event.release.tag-name }}-linux-x86_64.tar.gz
 
   windows-x86_64:
     runs-on: windows-latest
@@ -54,8 +54,13 @@ jobs:
           command: build
           args: --release
           use-cross: true
+      
+      - name: Optimize and package binary
+        run: |
+          cd target\release
+          zip -r ${{ env.BINARY_NAME }}-${{ github.event.release.tag-name }}-windows-x86_64.zip ${{ env.BINARY_NAME }}.exe
           
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
-          files: target/release/${{ env.BINARY_NAME }}.exe
+          files: target/release/${{ env.BINARY_NAME }}-${{ github.event.release.tag-name }}-windows-x86_64.zip
