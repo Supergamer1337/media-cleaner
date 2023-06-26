@@ -55,7 +55,7 @@ jobs:
           args: --release
           use-cross: true
           
-      - run: Compress-Archive -Path target/release/* -Destination ${{ env.BINARY_NAME }}-${{ github.ref_name }}-windows-x86_64.zip
+      - run: Compress-Archive -Path target/release/${{ env.BINARY_NAME }}.exe -Destination ${{ env.BINARY_NAME }}-${{ github.ref_name }}-windows-x86_64.zip
       
       - name: Release
         uses: softprops/action-gh-release@v1
