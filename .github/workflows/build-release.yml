@@ -54,12 +54,9 @@ jobs:
           command: build
           args: --release
           use-cross: true
-      
-      - name: Optimize and package binary
-        run: |
-          cd target\release
-          zip -r ${{ env.BINARY_NAME }}-${{ github.event.release.tag-name }}-windows-x86_64.zip ${{ env.BINARY_NAME }}.exe
           
+      - run: Compress-Archive -Path target/release/* -Destination ${{ env.BINARY_NAME }}-${{ github.event.release.tag-name }}-windows-x86_64.zip
+      
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
