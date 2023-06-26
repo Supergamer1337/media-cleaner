@@ -36,7 +36,37 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: target/x86_64-unknown-linux-musl/release/${{ env.BINARY_NAME }}-${{ github.ref_name }}-linux-x86_64.tar.gz
+  
+  armv7-unknown-linux-gnueabihf:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
 
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          default: true
+
+      - name: Build binary
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --release --target armv7-unknown-linux-gnueabihf
+          use-cross: true
+
+      - name: Optimize and package binary
+        run: |
+          cd target/armv7-unknown-linux-gnueabihf/release
+          strip ${{ env.BINARY_NAME }}
+          chmod +x ${{ env.BINARY_NAME }}
+          tar -c ${{ env.BINARY_NAME }} | gzip > ${{ env.BINARY_NAME }}-${{ github.ref_name }}-armv7-unknown-linux-gnueabihf.tar.gz
+
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: target/armv7-unknown-linux-gnueabihf/release/${{ env.BINARY_NAME }}-${{ github.ref_name }}-armv7-unknown-linux-gnueabihf.tar.gz
+  
   windows-x86_64:
     runs-on: windows-latest
     steps:
