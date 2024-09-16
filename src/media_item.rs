@@ -1,5 +1,6 @@
 use color_eyre::{eyre::eyre, owo_colors::OwoColorize, Result};
 use std::fmt::{Debug, Display};
+use chrono::{DateTime, Utc};
 use tokio::try_join;
 
 use crate::{
@@ -173,6 +174,10 @@ impl CompleteMediaItem {
         }
 
         Ok(())
+    }
+
+    pub fn get_requested_date(&self) -> Option<DateTime<Utc>> {
+        self.request.as_ref().map(|request| request.created_at)
     }
 
     pub fn get_disk_size(&self) -> i64 {

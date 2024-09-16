@@ -14,7 +14,7 @@ use itertools::Itertools;
 use overseerr::MediaRequest;
 use shared::{Order, SortingOption, SortingValue};
 use std::{io, process::Command};
-
+use std::cmp::PartialEq;
 use arguments::Arguments;
 use config::Config;
 use dialoguer::MultiSelect;
@@ -30,15 +30,17 @@ async fn main() -> Result<()> {
 
     Arguments::read_args()?;
 
-    let mut deletion_items = get_deletion_items().await?;
+    let deletion_items = get_deletion_items().await?;
 
     show_requests_result(&deletion_items)?;
 
     clear_screen()?;
 
-    let chosen = choose_items_to_delete(&mut deletion_items)?;
+    let sorted_requests = choose_sorting(deletion_items)?;
 
-    delete_chosen_items(&mut deletion_items, &chosen).await?;
+    let chosen_indexes = choose_items_to_delete(&sorted_requests)?;
+
+    delete_chosen_items(sorted_requests, chosen_indexes).await?;
 
     Ok(())
 }
@@ -168,16 +170,14 @@ fn show_requests_result(requests: &Vec<CompleteMediaItem>) -> Result<()> {
     Ok(())
 }
 
-fn choose_items_to_delete(requests: &mut Vec<CompleteMediaItem>) -> Result<Vec<usize>> {
-    choose_sorting(requests)?;
-
+fn choose_items_to_delete(requests: &Vec<CompleteMediaItem>) -> Result<Vec<usize>> {
     clear_screen()?;
 
     let items_to_show = Config::global().items_shown;
     let chosen: Vec<usize> = MultiSelect::new()
         .with_prompt("Choose what media to delete (SPACE to select, ENTER to confirm selection)")
         .max_length(items_to_show)
-        .items(&requests)
+        .items(requests)
         .interact()?;
 
     if chosen.len() == 0 {
@@ -187,14 +187,13 @@ fn choose_items_to_delete(requests: &mut Vec<CompleteMediaItem>) -> Result<Vec<u
 
     clear_screen()?;
 
-    verify_chosen(requests, &chosen)?;
+    verify_chosen(&requests, &chosen)?;
 
     Ok(chosen)
 }
 
-fn choose_sorting(requests: &mut Vec<CompleteMediaItem>) -> Result<()> {
+fn choose_sorting(mut requests: Vec<CompleteMediaItem>) -> Result<Vec<CompleteMediaItem>> {
     clear_screen()?;
-
     let args = Arguments::get_args();
 
     let sort = match args.sorting {
@@ -205,15 +204,16 @@ fn choose_sorting(requests: &mut Vec<CompleteMediaItem>) -> Result<()> {
     match sort.sorting_value {
         SortingValue::Name => (),
         SortingValue::Size => requests.sort_by_key(|req| req.get_disk_size()),
-        SortingValue::Type => requests.sort_by_key(|req| req.media_type),
-    };
+        SortingValue::Type => requests.sort_by_key(|req| req.media_type.clone()),
+        SortingValue::RequestedDate => requests.sort_by_key(|req| req.get_requested_date()),
+    }
 
-    match sort.sorting_direction {
-        Order::Asc => (),
-        Order::Desc => requests.reverse(),
-    };
+    // Reverse if sorting direction is descending
+    if sort.sorting_direction == Order::Desc {
+        requests.reverse();
+    }
 
-    Ok(())
+    Ok(requests)
 }
 
 fn choose_sorting_dialogue() -> Result<SortingOption> {
@@ -224,6 +224,8 @@ fn choose_sorting_dialogue() -> Result<SortingOption> {
         println!("Size - Descending: s");
         println!("Size - Ascending: sa");
         println!("Type - Descending: t");
+        println!("Requested Date - Ascending: r");
+        println!("Requested Date - Descending: rd");
 
         let input = get_user_input()?;
 
@@ -275,32 +277,35 @@ fn verify_chosen(requests: &Vec<CompleteMediaItem>, chosen: &Vec<usize>) -> Resu
 }
 
 async fn delete_chosen_items(
-    requests: &mut Vec<CompleteMediaItem>,
-    chosen: &Vec<usize>,
+    mut requests: Vec<CompleteMediaItem>,
+    chosen: Vec<usize>,
 ) -> Result<()> {
     let mut errs: Vec<(String, Report)> = Vec::new();
 
     for selection in chosen.into_iter().rev() {
-        let media_item = requests.swap_remove(*selection);
+        let media_item = requests.swap_remove(selection);
         let title = media_item.title.clone();
         if let Err(err) = media_item.remove_from_server().await {
             errs.push((title, err));
         }
     }
 
-    if errs.len() > 0 {
-        println!("Had some errors deleting items:\n");
-        errs.iter().for_each(|err| {
-            println!(
-                "Got the following error while deleting {}: {}",
-                err.0, err.0
-            );
-            print_line();
-        });
-
-        wait(None)?;
+    // If there are no errors, return early
+    if errs.is_empty() {
+        return Ok(());
     }
 
+    // Log errors if there are any
+    println!("Had some errors deleting items:\n");
+    errs.iter().for_each(|(title, err)| {
+        println!(
+            "Got the following error while deleting {}: {}",
+            title, err
+        );
+        print_line();
+    });
+
+    wait(None)?;
     Ok(())
 }
 
