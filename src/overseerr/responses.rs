@@ -2,7 +2,7 @@ use color_eyre::owo_colors::OwoColorize;
 use serde::Deserialize;
 use serde_repr::Deserialize_repr;
 use std::fmt::Display;
-
+use openssl::pkey::Public;
 use crate::shared::MediaType;
 
 #[derive(Debug, Deserialize)]

@@ -80,6 +80,8 @@ You can also pass an argument to the program to skip the sorting screen and go s
 -   `-n`: Sort by name
 -   `-nd`: Sort by name, in descending order
 -   `-t`: Sort by media type
+-   `-r`: Sort by request date
+-   `-rd`: Sort by request date, in descending order
 
 #### Getting a list of all media
 

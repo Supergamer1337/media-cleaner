@@ -24,11 +24,22 @@ pub enum Order {
     Asc,
 }
 
+impl PartialEq for Order {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (Order::Asc, Order::Asc) => true,
+            (Order::Desc, Order::Desc) => true,
+            _ => false,
+        }
+    }
+}
+
 #[derive(Debug, Clone, Copy)]
 pub enum SortingValue {
     Name,
     Size,
     Type,
+    RequestedDate,
 }
 
 #[derive(Debug, Clone)]
@@ -50,32 +61,44 @@ impl SortingOption {
     pub fn from_str(s: &str) -> Result<Self> {
         match s {
             "nd" => {
-                return Ok(SortingOption {
+                Ok(SortingOption {
                     sorting_value: SortingValue::Name,
                     sorting_direction: Order::Desc,
                 })
             }
             "n" => {
-                return Ok(SortingOption {
+                Ok(SortingOption {
                     sorting_value: SortingValue::Name,
                     sorting_direction: Order::Asc,
                 })
             }
             "sa" => {
-                return Ok(SortingOption {
+                Ok(SortingOption {
                     sorting_value: SortingValue::Size,
                     sorting_direction: Order::Asc,
                 })
             }
             "s" => {
-                return Ok(SortingOption {
+                Ok(SortingOption {
                     sorting_value: SortingValue::Size,
                     sorting_direction: Order::Desc,
                 })
             }
             "t" => {
-                return Ok(SortingOption {
+                Ok(SortingOption {
                     sorting_value: SortingValue::Type,
+                    sorting_direction: Order::Desc,
+                })
+            }
+            "r" => {
+                Ok(SortingOption {
+                    sorting_value: SortingValue::RequestedDate,
+                    sorting_direction: Order::Asc,
+                })
+            }
+            "rd" => {
+                Ok(SortingOption {
+                    sorting_value: SortingValue::RequestedDate,
                     sorting_direction: Order::Desc,
                 })
             }
