@@ -3,8 +3,12 @@ mod responses;
 
 use color_eyre::Result;
 
-use self::responses::SeriesResource;
+pub use self::responses::SeriesResource;
 pub use self::responses::SeriesStatus;
+
+pub async fn get_all_items(is_4k: bool) -> Result<Vec<SeriesResource>> {
+    api::get("/series", None, is_4k).await
+}
 
 pub async fn get_sonarr_data(id: i32, is_4k: bool) -> Result<SeriesResource> {
     let path = format!("/series/{}", id.to_string());

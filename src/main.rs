@@ -1,26 +1,23 @@
 mod arguments;
 mod arr;
 mod config;
-mod media_item;
 mod overseerr;
 mod plex;
 mod shared;
 mod tautulli;
 mod utils;
 
+use crate::{overseerr::ServerItem, utils::human_file_size};
+use arguments::Arguments;
 use color_eyre::{eyre::eyre, Report, Result};
+use config::Config;
+use dialoguer::MultiSelect;
 use futures::future;
 use itertools::Itertools;
 use overseerr::MediaRequest;
 use shared::{Order, SortingOption, SortingValue};
-use std::{io, process::Command};
 use std::cmp::PartialEq;
-use arguments::Arguments;
-use config::Config;
-use dialoguer::MultiSelect;
-use media_item::{CompleteMediaItem, MediaItem};
-
-use crate::{overseerr::ServerItem, utils::human_file_size};
+use std::{io, process::Command};
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -30,17 +27,36 @@ async fn main() -> Result<()> {
 
     Arguments::read_args()?;
 
-    let deletion_items = get_deletion_items().await?;
+    println!("Gathering data from services...");
 
-    show_requests_result(&deletion_items)?;
+    let items = arr::get_all_items().await?;
+    for item in items.iter() {
+        match item {
+            arr::ArrData::Tv(series) => {
+                println!(
+                    "TV: {}",
+                    series.title.as_ref().unwrap_or(&"Unknown".to_string())
+                );
+            }
+            arr::ArrData::Movie(movie) => {
+                println!(
+                    "Movie: {}",
+                    movie.title.as_ref().unwrap_or(&"Unknown".to_string())
+                );
+            }
+        }
+    }
+    println!("Total items: {}", items.len());
 
-    clear_screen()?;
+    // show_requests_result(&deletion_items)?;
 
-    let sorted_requests = choose_sorting(deletion_items)?;
+    // clear_screen()?;
 
-    let chosen_indexes = choose_items_to_delete(&sorted_requests)?;
+    // let sorted_requests = choose_sorting(deletion_items)?;
 
-    delete_chosen_items(sorted_requests, chosen_indexes).await?;
+    // let chosen_indexes = choose_items_to_delete(&sorted_requests)?;
+
+    // delete_chosen_items(sorted_requests, chosen_indexes).await?;
 
     Ok(())
 }
@@ -56,70 +72,6 @@ fn read_and_validate_config() -> Result<()> {
     }
 
     Ok(())
-}
-
-async fn get_deletion_items() -> Result<Vec<CompleteMediaItem>> {
-    println!("Gathering all required data from your services.\nDepending on the amount of data and your connection speed, this could take a while...");
-
-    let all_items = Arguments::get_args().all_media;
-
-    let mut media_items = MediaRequest::get_all()
-        .await?
-        .into_iter()
-        .map(MediaItem::from_request)
-        .collect_vec();
-
-    // This is done by merging the two lists, because Overseerr does not send who requested the media along
-    // when getting all of the media on the server. Neither does Overseerr have an endpoint for getting all
-    // requests associated with an item.
-    //
-    // If that was allowed, this could be made much nicer and more performance friendly.
-    if all_items {
-        let mut not_requested_media_items = ServerItem::get_all()
-            .await?
-            .into_iter()
-            .map(MediaItem::from_server_item)
-            .collect_vec();
-
-        media_items.append(&mut not_requested_media_items);
-
-        media_items.sort_by(|item1, item2| {
-            (&item1.rating_key, !item1.request.is_some())
-                .cmp(&(&item2.rating_key, !item2.request.is_some()))
-        });
-        media_items.dedup_by(|item1, item2| item1.rating_key == item2.rating_key);
-    }
-
-    let futures = media_items
-        .into_iter()
-        .filter(|i| i.is_available() && i.has_manager_active() && !i.user_ignored())
-        .map(|item| {
-            tokio::spawn(async move {
-                let item = item.into_complete_media().await?;
-
-                Ok::<CompleteMediaItem, Report>(item)
-            })
-        });
-
-    let mut errors: Vec<Report> = Vec::new();
-
-    let complete_items = future::try_join_all(futures)
-        .await?
-        .into_iter()
-        .filter_map(|f| match f {
-            Ok(item) => Some(item),
-            Err(err) => {
-                errors.push(err);
-                None
-            }
-        })
-        .unique_by(|item| item.title.clone())
-        .sorted_by(|item1, item2| item1.title.cmp(&item2.title))
-        .collect();
-
-    show_potential_request_errors(errors)?;
-
-    Ok(complete_items)
 }
 
 fn show_potential_request_errors(errs: Vec<Report>) -> Result<()> {
@@ -156,65 +108,65 @@ fn show_potential_request_errors(errs: Vec<Report>) -> Result<()> {
     Ok(())
 }
 
-fn show_requests_result(requests: &Vec<CompleteMediaItem>) -> Result<()> {
-    if requests.len() == 0 {
-        println!("You do not seem to have any valid requests, with data available.");
-        println!("Are you sure all your requests are available and downloaded? Or some data was unable to be acquired from other services.");
-        println!("Either try again later, or look over your requests.");
+// fn show_requests_result(requests: &Vec<CompleteMediaItem>) -> Result<()> {
+//     if requests.len() == 0 {
+//         println!("You do not seem to have any valid requests, with data available.");
+//         println!("Are you sure all your requests are available and downloaded? Or some data was unable to be acquired from other services.");
+//         println!("Either try again later, or look over your requests.");
 
-        println!();
-        wait(None)?;
-        std::process::exit(0);
-    }
+//         println!();
+//         wait(None)?;
+//         std::process::exit(0);
+//     }
 
-    Ok(())
-}
+//     Ok(())
+// // }
 
-fn choose_items_to_delete(requests: &Vec<CompleteMediaItem>) -> Result<Vec<usize>> {
-    clear_screen()?;
+// fn choose_items_to_delete(requests: &Vec<CompleteMediaItem>) -> Result<Vec<usize>> {
+//     clear_screen()?;
 
-    let items_to_show = Config::global().items_shown;
-    let chosen: Vec<usize> = MultiSelect::new()
-        .with_prompt("Choose what media to delete (SPACE to select, ENTER to confirm selection)")
-        .max_length(items_to_show)
-        .items(requests)
-        .interact()?;
+//     let items_to_show = Config::global().items_shown;
+//     let chosen: Vec<usize> = MultiSelect::new()
+//         .with_prompt("Choose what media to delete (SPACE to select, ENTER to confirm selection)")
+//         .max_length(items_to_show)
+//         .items(requests)
+//         .interact()?;
 
-    if chosen.len() == 0 {
-        println!("No items selected. Exiting...");
-        std::process::exit(0);
-    }
+//     if chosen.len() == 0 {
+//         println!("No items selected. Exiting...");
+//         std::process::exit(0);
+//     }
 
-    clear_screen()?;
+//     clear_screen()?;
 
-    verify_chosen(&requests, &chosen)?;
+//     verify_chosen(&requests, &chosen)?;
 
-    Ok(chosen)
-}
+//     Ok(chosen)
+// }
 
-fn choose_sorting(mut requests: Vec<CompleteMediaItem>) -> Result<Vec<CompleteMediaItem>> {
-    clear_screen()?;
-    let args = Arguments::get_args();
+// fn choose_sorting(mut requests: Vec<CompleteMediaItem>) -> Result<Vec<CompleteMediaItem>> {
+//     clear_screen()?;
+//     let args = Arguments::get_args();
 
-    let sort = match args.sorting {
-        Some(ref sort) => sort.clone(),
-        None => choose_sorting_dialogue()?,
-    };
+//     let sort = match args.sorting {
+//         Some(ref sort) => sort.clone(),
+//         None => choose_sorting_dialogue()?,
+//     };
 
-    match sort.sorting_value {
-        SortingValue::Name => (),
-        SortingValue::Size => requests.sort_by_key(|req| req.get_disk_size()),
-        SortingValue::Type => requests.sort_by_key(|req| req.media_type.clone()),
-        SortingValue::RequestedDate => requests.sort_by_key(|req| req.get_requested_date()),
-    }
+//     match sort.sorting_value {
+//         SortingValue::Name => (),
+//         SortingValue::Size => requests.sort_by_key(|req| req.get_disk_size()),
+//         SortingValue::Type => requests.sort_by_key(|req| req.media_type.clone()),
+//         SortingValue::RequestedDate => requests.sort_by_key(|req| req.get_requested_date()),
+//     }
 
-    // Reverse if sorting direction is descending
-    if sort.sorting_direction == Order::Desc {
-        requests.reverse();
-    }
+//     // Reverse if sorting direction is descending
+//     if sort.sorting_direction == Order::Desc {
+//         requests.reverse();
+//     }
 
-    Ok(requests)
-}
+//     Ok(requests)
+// }
 
 fn choose_sorting_dialogue() -> Result<SortingOption> {
     loop {
@@ -238,76 +190,73 @@ fn choose_sorting_dialogue() -> Result<SortingOption> {
     }
 }
 
-fn verify_chosen(requests: &Vec<CompleteMediaItem>, chosen: &Vec<usize>) -> Result<()> {
-    let total_size: String = human_file_size(
-        chosen
-            .iter()
-            .filter_map(|selection| {
-                if let Some(media_item) = requests.get(*selection) {
-                    Some(media_item.get_disk_size())
-                } else {
-                    None
-                }
-            })
-            .sum(),
-    );
+// fn verify_chosen(requests: &Vec<CompleteMediaItem>, chosen: &Vec<usize>) -> Result<()> {
+//     let total_size: String = human_file_size(
+//         chosen
+//             .iter()
+//             .filter_map(|selection| {
+//                 if let Some(media_item) = requests.get(*selection) {
+//                     Some(media_item.get_disk_size())
+//                 } else {
+//                     None
+//                 }
+//             })
+//             .sum(),
+//     );
 
-    println!(
-        "Are you sure you want to delete the following items ({}):",
-        total_size
-    );
-    chosen.iter().for_each(|selection| {
-        if let Some(media_item) = requests.get(*selection) {
-            let media_type = media_item.media_type;
-            println!("- {} - {}", &media_item.title, media_type.to_string());
-        } else {
-            println!("- Unknown item");
-        }
-    });
+//     println!(
+//         "Are you sure you want to delete the following items ({}):",
+//         total_size
+//     );
+//     chosen.iter().for_each(|selection| {
+//         if let Some(media_item) = requests.get(*selection) {
+//             let media_type = media_item.media_type;
+//             println!("- {} - {}", &media_item.title, media_type.to_string());
+//         } else {
+//             println!("- Unknown item");
+//         }
+//     });
 
-    println!("\ny/n:");
-    let user_input = get_user_input()?;
+//     println!("\ny/n:");
+//     let user_input = get_user_input()?;
 
-    if !user_input.starts_with("y") {
-        println!("Cancelling...");
-        std::process::exit(0);
-    }
+//     if !user_input.starts_with("y") {
+//         println!("Cancelling...");
+//         std::process::exit(0);
+//     }
 
-    Ok(())
-}
+//     Ok(())
+// }
 
-async fn delete_chosen_items(
-    mut requests: Vec<CompleteMediaItem>,
-    chosen: Vec<usize>,
-) -> Result<()> {
-    let mut errs: Vec<(String, Report)> = Vec::new();
+// async fn delete_chosen_items(
+//     mut requests: Vec<CompleteMediaItem>,
+//     chosen: Vec<usize>,
+// ) -> Result<()> {
+//     let mut errs: Vec<(String, Report)> = Vec::new();
 
-    for selection in chosen.into_iter().rev() {
-        let media_item = requests.swap_remove(selection);
-        let title = media_item.title.clone();
-        if let Err(err) = media_item.remove_from_server().await {
-            errs.push((title, err));
-        }
-    }
+//     for selection in chosen.into_iter().rev() {
+//         let media_item = requests.swap_remove(selection);
+//         let title = media_item.title.clone();
+//         if let Err(err) = media_item.remove_from_server().await {
+//             errs.push((title, err));
+//         }
+//     }
 
-    // If there are no errors, return early
-    if errs.is_empty() {
-        return Ok(());
-    }
+//     // If there are no errors, return early
+//     if errs.is_empty() {
+//         return Ok(());
+//     }
 
-    // Log errors if there are any
-    println!("Had some errors deleting items:\n");
-    errs.iter().for_each(|(title, err)| {
-        println!(
-            "Got the following error while deleting {}: {}",
-            title, err
-        );
-        print_line();
-    });
+//     // Log errors if there are any
+//     println!("Had some errors deleting items:\n");
+//     errs.iter().for_each(|(title, err)| {
+//         println!("Got the following error while deleting {}: {}", title, err);
+//         print_line();
+//     });
 
-    wait(None)?;
-    Ok(())
-}
+//     wait(None)?;
+//     Ok(())
+// }
 
 fn clear_screen() -> Result<()> {
     if cfg!(target_os = "windows") {
