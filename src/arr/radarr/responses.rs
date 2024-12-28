@@ -9,6 +9,8 @@ pub struct MovieResource {
     pub size_on_disk: i64,
     pub digital_release: Option<String>,
     pub physical_release: Option<String>,
+    pub tvdb_id: Option<u64>,
+    pub tmdb_id: Option<u64>,
 }
 
 #[derive(Debug, Deserialize, Clone, Copy)]

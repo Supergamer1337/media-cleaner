@@ -7,15 +7,12 @@ mod shared;
 mod tautulli;
 mod utils;
 
-use crate::{overseerr::ServerItem, utils::human_file_size};
 use arguments::Arguments;
 use color_eyre::{eyre::eyre, Report, Result};
 use config::Config;
-use dialoguer::MultiSelect;
-use futures::future;
 use itertools::Itertools;
 use overseerr::MediaRequest;
-use shared::{Order, SortingOption, SortingValue};
+use shared::SortingOption;
 use std::cmp::PartialEq;
 use std::{io, process::Command};
 
@@ -30,23 +27,37 @@ async fn main() -> Result<()> {
     println!("Gathering data from services...");
 
     let items = arr::get_all_items().await?;
-    for item in items.iter() {
-        match item {
-            arr::ArrData::Tv(series) => {
-                println!(
-                    "TV: {}",
-                    series.title.as_ref().unwrap_or(&"Unknown".to_string())
-                );
-            }
+    let plex_data = plex::get_all_items().await?;
+
+    let mut matches = 0;
+    items.iter().cartesian_product(plex_data.iter()).for_each(
+        |(arr_item, plex_item)| match arr_item {
             arr::ArrData::Movie(movie) => {
-                println!(
-                    "Movie: {}",
-                    movie.title.as_ref().unwrap_or(&"Unknown".to_string())
-                );
+                if movie.tmdb_id.map(|i| i.to_string()) == plex_item.tmdb_id {
+                    println!(
+                        "Movie {:?} has rating key {}. Matched using TMDb ID {:?}",
+                        movie.title.as_ref().unwrap_or(&"Unknown".to_string()),
+                        plex_item.rating_key,
+                        movie.tmdb_id.as_ref()
+                    );
+                    matches += 1;
+                }
             }
-        }
-    }
-    println!("Total items: {}", items.len());
+            arr::ArrData::Tv(tv) => {
+                if tv.tvdb_id.map(|i| i.to_string()) == plex_item.tvdb_id {
+                    println!(
+                        "TV Show {:?} has rating key {}. Matched using TVDb ID {:?}",
+                        tv.title.as_ref().unwrap_or(&"Unknown".to_string()),
+                        plex_item.rating_key,
+                        tv.tvdb_id.as_ref()
+                    );
+                    matches += 1;
+                }
+            }
+        },
+    );
+
+    println!("Found {} matches.", matches);
 
     // show_requests_result(&deletion_items)?;
 

@@ -1,23 +1,37 @@
-use serde::Deserialize;
+use serde::{Deserialize, Deserializer};
 
 #[derive(Debug, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct TvData {
-    #[serde(rename = "Directory")]
-    pub directory: Directory,
+    pub directory: Vec<Show>,
 }
 
 #[derive(Debug, Deserialize)]
-pub struct Directory {
+#[serde(rename_all = "camelCase")]
+pub struct Show {
     pub title: String,
+    pub rating_key: String,
+    #[serde(rename = "Guid", default)]
+    pub guids: Vec<Guid>,
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct MovieData {
-    #[serde(rename = "Video")]
-    pub video: Video,
+    pub video: Vec<Video>,
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Video {
     pub title: String,
+    pub rating_key: String,
+    #[serde(rename = "Guid", default)]
+    pub guids: Vec<Guid>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Guid {
+    pub id: String,
 }

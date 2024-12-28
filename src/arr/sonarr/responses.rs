@@ -10,6 +10,8 @@ pub struct SeriesResource {
     pub next_airing: Option<String>,
     pub statistics: SeriesStatisticsResource,
     pub seasons: Vec<SeasonResource>,
+    pub tvdb_id: Option<u64>,
+    pub tmdb_id: Option<u64>,
 }
 
 #[derive(Debug, Deserialize, Clone, Copy)]
