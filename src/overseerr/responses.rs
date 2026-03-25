@@ -50,6 +50,8 @@ pub enum MediaStatus {
     Processing,
     PartiallyAvailable,
     Available,
+    Blocklisted,
+    Deleted,
 }
 
 impl Display for MediaStatus {
@@ -60,6 +62,8 @@ impl Display for MediaStatus {
             Self::Processing => write!(f, "{}", "Processing".yellow().to_string()),
             Self::PartiallyAvailable => write!(f, "{}", "Partially Available".blue().to_string()),
             Self::Available => write!(f, "{}", "Available".green().to_string()),
+            Self::Blocklisted => write!(f, "{}", "Blocklisted".red().to_string()),
+            Self::Deleted => write!(f, "{}", "Deleted".red().to_string()),
         }
     }
 }
