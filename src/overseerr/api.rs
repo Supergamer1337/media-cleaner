@@ -12,7 +12,7 @@ where
     T: DeserializeOwned,
 {
     let client = reqwest::Client::new();
-    let config = &Config::global().overseerr;
+    let config = &Config::global().seerr;
     let response = client
         .get(format!(
             "{}/api/v1{}?take=100&{}",
@@ -54,7 +54,7 @@ where
 }
 
 pub async fn delete(path: &str) -> Result<()> {
-    let config = &Config::global().overseerr;
+    let config = &Config::global().seerr;
     let client = reqwest::Client::new();
 
     client

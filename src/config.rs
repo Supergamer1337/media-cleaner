@@ -9,7 +9,8 @@ pub struct Config {
     #[serde(default = "default_items_shown")]
     pub items_shown: usize,
     pub plex: Plex,
-    pub overseerr: Overseerr,
+    #[serde(alias = "overseerr")]
+    pub seerr: Seerr,
     pub tautulli: Tautulli,
     pub sonarr: Option<Sonarr>,
     pub sonarr_4k: Option<Sonarr>,
@@ -25,7 +26,7 @@ pub struct Plex {
 }
 
 #[derive(Debug, Deserialize)]
-pub struct Overseerr {
+pub struct Seerr {
     pub url: String,
     pub api_key: String,
 }
@@ -70,7 +71,7 @@ impl Config {
     }
 
     fn clean_urls(conf: &mut Config) {
-        clean_url(&mut conf.overseerr.url);
+        clean_url(&mut conf.seerr.url);
         clean_url(&mut conf.plex.url);
         clean_url(&mut conf.tautulli.url);
 

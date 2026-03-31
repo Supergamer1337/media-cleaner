@@ -1,6 +1,6 @@
 # Media Cleaner
 
-Media Cleaner is a simple CLI tool to clean up your media library based on your Overseerr requests and Tautulli history, written in Rust.
+Media Cleaner is a simple CLI tool to clean up your media library based on your Overseerr/Seerr requests and Tautulli history, written in Rust.
 
 It was written to help me clean up my Plex library, but it should work for anyone with a similar setup. It's not perfect, but it works for me. (This project was written partly to help me learn Rust, so please don't judge me too harshly, though feedback is always welcome.)
 
@@ -22,7 +22,7 @@ items_shown: 5
 plex:
     url: https://YOUR_PLEX_URL
     token: YOUR_PLEX_TOKEN
-overseerr:
+overseerr: # You can also use "seerr:" here if you've migrated to Seerr
     url: https://YOUR_OVERSEERR_URL
     api_key: YOUR_API_KEY
 tautulli:
@@ -46,11 +46,11 @@ All fields have to be filled in, except for Sonarr or Radarr (though if their ro
 
 You can get your api keys from the respective applications. A simple search should help you find it. For the Plex token, you can follow [this guide](https://support.plex.tv/articles/204059436-finding-an-authentication-token-x-plex-token/).
 
-**ALSO MAKE SURE CSRF IS TURNED OFF IN OVERSEERR.**
+**ALSO MAKE SURE CSRF IS TURNED OFF IN OVERSEERR/SEERR.**
 
 #### Ignoring users
 
-If you want to ignore a user (or multiple) simply add them to the `ignored_users` list in the config file. This is useful if you have a user that you don't want to remove media for, for example yourself. The user is matched by their Overseerr username, so make sure you use the same username in both places.
+If you want to ignore a user (or multiple) simply add them to the `ignored_users` list in the config file. This is useful if you have a user that you don't want to remove media for, for example yourself. The user is matched by their Overseerr/Seerr username, so make sure you use the same username in both places.
 
 Example:
 
